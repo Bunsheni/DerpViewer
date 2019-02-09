@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+	         xmlns:ffimageloading="clr-namespace:FFImageLoading.Forms;assembly=FFImageLoading.Forms"
+             xmlns:local="clr-namespace:DerpViewer.Views"
+             x:Class="DerpViewer.Views.DerpImagesPage">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Download" Clicked="Download_Clicked">
+            <ToolbarItem.Icon>
+                <OnPlatform x:TypeArguments="FileImageSource">
+                    <On Platform="UWP" Value="Icon\Download.png"/>
+                </OnPlatform>
+            </ToolbarItem.Icon>
+        </ToolbarItem>
+        <ToolbarItem Text="ClearSelect" Clicked="ClearSelect_Clicked">
+            <ToolbarItem.Icon>
+                <OnPlatform x:TypeArguments="FileImageSource">
+                    <On Platform="UWP" Value="Icon\refresh.png"/>
+                </OnPlatform>
+            </ToolbarItem.Icon>
+        </ToolbarItem>
+        <ToolbarItem Text="Sort" Clicked="Sort_Clicked">
+            <ToolbarItem.Icon>
+                <OnPlatform x:TypeArguments="FileImageSource">
+                    <On Platform="UWP" Value="Icon\filter.png"/>
+                </OnPlatform>
+            </ToolbarItem.Icon>
+        </ToolbarItem>
+    </ContentPage.ToolbarItems>
+    <ContentPage.Content>
+        <StackLayout>
+            <SearchBar x:Name="searchBar" Text="{Binding Key}" SearchButtonPressed="SearchBar_SearchButtonPressed" TextChanged="searchBar_TextChanged"/>
+            <AbsoluteLayout x:Name="absLayout">
+                <ContentView AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="False">
+                    <local:CustomWebView x:Name="webView" HeightRequest="0" WidthRequest="0"/>
+                </ContentView>
+                <ContentView x:Name="searchView" AbsoluteLayout.LayoutBounds="0, 0, 1, 1" AbsoluteLayout.LayoutFlags="All" IsVisible="false">
+                    <ListView x:Name="suggestionListView" BackgroundColor="White"
+                              CachingStrategy="RecycleElement"
+                          SeparatorVisibility="None"
+                          HasUnevenRows="true"
+                              ItemsSource="{Binding SuggestionItems}"
+                          ItemSelected="suggestionListView_ItemSelected" IsVisible="True">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <TextCell Text="{Binding NameEn}" Tapped="TextCell_Tapped"/>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </ContentView>
+                <ContentView x:Name="contentView" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="true">
+                    <StackLayout>
+                        <FlexLayout x:Name="searchBox" Wrap="Wrap" FlowDirection="LeftToRight" ChildAdded="SearchBox_ChildAdded" ChildRemoved="SearchBox_ChildAdded"/>
+                        <StackLayout x:Name="progressView" HeightRequest="{Binding ProgressBarHeight}" Margin="-3" IsVisible="{Binding ProgressBarIsVisible}">
+                            <ProgressBar x:Name="progressBar1" Progress="{Binding Progress1}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
+                            <ProgressBar x:Name="progressBar2" Progress="{Binding Progress2}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
+                        </StackLayout>
+                        <ListView x:Name="listView" Margin="0" 
+                                  ItemsSource="{Binding Images}"
+                                  HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
+                                  HasUnevenRows="true"
+                                  SelectionMode="None"
+                                  ItemAppearing="listView_ItemAppearing"
+                                  ItemDisappearing="listView_ItemDisappearing"
+                                  IsPullToRefreshEnabled="true"
+                                  ItemTapped="listView_ItemTapped">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <ViewCell>
+                                        <StackLayout Orientation="Horizontal" BackgroundColor="{Binding BackgroundColor}">
+                                            <ffimageloading:CachedImage  
+                                                HorizontalOptions="Center" VerticalOptions="Center"
+                                                WidthRequest="120" HeightRequest="120"
+			                                    ClassId="{Binding Id}"
+                                                Source="{Binding ThumbUrl}" LoadingPlaceholder="{Binding ThumbTinyUrl}">
+                                                <ffimageloading:CachedImage.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
+                                                </ffimageloading:CachedImage.GestureRecognizers>
+                                            </ffimageloading:CachedImage>
+                                            <StackLayout HorizontalOptions="StartAndExpand">
+                                                <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start">
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                                <Label Text='{Binding Aritsts}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                                <Label Text='{Binding Contents}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                                <Label Text='{Binding Characters}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                                <Label Text='{Binding Anothers}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                            </StackLayout>
+                                        </StackLayout>
+                                    </ViewCell>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackLayout>
+                </ContentView>
+            </AbsoluteLayout>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

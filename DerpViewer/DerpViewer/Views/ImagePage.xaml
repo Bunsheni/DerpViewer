@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+	         xmlns:ffimageloading="clr-namespace:FFImageLoading.Forms;assembly=FFImageLoading.Forms"
+             x:Class="DerpViewer.Views.ImagePage">
+    <ContentPage.Content>
+        <!--<Image Source="{Binding ImageSource}"/>-->
+        <ContentView HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <ContentView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped" NumberOfTapsRequired="2"/>
+            </ContentView.GestureRecognizers>
+            <ffimageloading:CachedImage x:Name="imageView">
+            </ffimageloading:CachedImage>
+        </ContentView>
+    </ContentPage.Content>
+</ContentPage>
