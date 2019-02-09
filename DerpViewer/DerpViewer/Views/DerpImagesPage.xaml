@@ -37,19 +37,21 @@
                 <ContentView x:Name="searchView" AbsoluteLayout.LayoutBounds="0, 0, 1, 1" AbsoluteLayout.LayoutFlags="All" IsVisible="false">
                     <ListView x:Name="suggestionListView" BackgroundColor="White"
                               CachingStrategy="RecycleElement"
-                          SeparatorVisibility="None"
-                          HasUnevenRows="true"
+                              SeparatorVisibility="None"
+                              HasUnevenRows="true"
+                              IsVisible="True"
                               ItemsSource="{Binding SuggestionItems}"
-                          ItemSelected="suggestionListView_ItemSelected" IsVisible="True">
+                              ItemTapped="suggestionListView_ItemTapped">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <TextCell Text="{Binding NameEn}" Tapped="TextCell_Tapped"/>
+                                <TextCell Text="{Binding NameEn}"/>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
                 </ContentView>
                 <ContentView x:Name="contentView" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="true">
                     <StackLayout>
+                        <FlexLayout x:Name="searchBox" Wrap="Wrap" FlowDirection="LeftToRight" ChildAdded="SearchBox_ChildAdded" ChildRemoved="SearchBox_ChildAdded"/>
                         <StackLayout x:Name="progressView" HeightRequest="{Binding ProgressBarHeight}" Margin="-3" IsVisible="{Binding ProgressBarIsVisible}">
                             <ProgressBar x:Name="progressBar1" Progress="{Binding Progress1}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
                             <ProgressBar x:Name="progressBar2" Progress="{Binding Progress2}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
@@ -60,7 +62,6 @@
                                   HasUnevenRows="true"
                                   SelectionMode="None"
                                   ItemAppearing="listView_ItemAppearing"
-                                  ItemDisappearing="listView_ItemDisappearing"
                                   IsPullToRefreshEnabled="true"
                                   ItemTapped="listView_ItemTapped">
                             <ListView.ItemTemplate>

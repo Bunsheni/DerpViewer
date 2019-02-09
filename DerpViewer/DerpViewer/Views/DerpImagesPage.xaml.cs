@@ -21,13 +21,17 @@ namespace DerpViewer.Views
         DerpImagesViewModel viewModel;
         int _tabCount;
         bool pageLock;
+        string tabbedSuggestionItem;
+        DerpImage tabbedImage;
+        ImageSource tabbedImageSource;
+
         public DerpImagesPage()
         {
             InitializeComponent();
             BindingContext = viewModel = new DerpImagesViewModel(this as IWebConnection);
             listView.RefreshCommand = new Command(async () =>
             {
-                await viewModel.LastedView();
+                await viewModel.ExecuteLoadItemsCommand();
                 listView.IsRefreshing = false;
             });
         }
@@ -37,7 +41,7 @@ namespace DerpViewer.Views
             if (listView.ItemsSource == null)
             {
                 await RootPage.GetDerpSQLiteDb().GetTagsAsync();
-                await viewModel.LastedView();
+                await viewModel.ExecuteLoadItemsCommand();
             }
             base.OnAppearing();
         }
@@ -53,8 +57,6 @@ namespace DerpViewer.Views
             return await webView.GetWebClintContentsAsync(url);
         }
 
-        DerpImage tabbedImage;
-        ImageSource tabbedImageSource;
         private void TapGestureRecognizer_Tapped(object sender, EventArgs e)
         {
             if (_tabCount < 1)
@@ -94,7 +96,6 @@ namespace DerpViewer.Views
             return false;
         }
 
-
         private void searchBar_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (searchBar.Text.Trim().Length != 0 && searchBar.Text.Trim().Last() != ',')
@@ -112,8 +113,11 @@ namespace DerpViewer.Views
 
         private void SearchBar_SearchButtonPressed(object sender, EventArgs e)
         {
-            viewModel.Search();
             searchView.IsVisible = false;
+            if (searchBar.Text.Trim().Length != 0)
+            {
+                AddToSearchBox(searchBar.Text.Trim(), false);
+            }
             contentView.IsVisible = true;
         }
 
@@ -122,6 +126,7 @@ namespace DerpViewer.Views
             ((DerpImage)e.Item).IsSelected ^= true;
             listView.SelectedItem = null;
         }
+
         private void Download_Clicked(object sender, EventArgs e)
         {
             Task.Run(() => viewModel.Download());
@@ -130,8 +135,12 @@ namespace DerpViewer.Views
         private async void Sort_Clicked(object sender, EventArgs e)
         {
             string temp = await DisplayActionSheet("SortBy", "Cancle", null, DerpibooruService.sortbyen);
-            int tempint = DerpibooruService.sortbyen.ToList().FindIndex(i => string.Compare(i, temp) == 0);
-            viewModel.Sort(tempint);
+            if(temp != null)
+            {
+                int tempint = DerpibooruService.sortbyen.ToList().FindIndex(i => string.Compare(i, temp) == 0);
+                viewModel.Sort(tempint);
+                SearchAction();
+            }
         }
 
         private void listView_ItemAppearing(object sender, ItemVisibilityEventArgs e)
@@ -144,25 +153,20 @@ namespace DerpViewer.Views
             viewModel.ClearSelect();
         }
 
-        string tabbedItem;
-        private void suggestionListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
-        {
-            suggestionListView.SelectedItem = null;
-        }
 
-        private void TextCell_Tapped(object sender, EventArgs e)
+        private void suggestionListView_ItemTapped(object sender, ItemTappedEventArgs e)
         {
             if (_tabCount < 1)
             {
                 try
                 {
-                    tabbedItem = ((TextCell)sender).Text;
+                    tabbedSuggestionItem = ((DerpTag)e.Item).NameEn;
                 }
                 catch
                 {
                     return;
                 }
-                TimeSpan tt = new TimeSpan(3000000);
+                TimeSpan tt = new TimeSpan(5000000);
                 Device.StartTimer(tt, SuggestionHandleFuncAsync);
             }
             _tabCount++;
@@ -170,26 +174,32 @@ namespace DerpViewer.Views
 
         private bool SuggestionHandleFuncAsync()
         {
-            if (tabbedItem != null)
+            if (tabbedSuggestionItem != null)
             {
                 if (_tabCount > 1)
                 {
-                    viewModel.AddKey("-" + tabbedItem);
+                    AddToSearchBox("-" + tabbedSuggestionItem, false);
                 }
                 else
                 {
-                    viewModel.AddKey(tabbedItem);
+                    AddToSearchBox(tabbedSuggestionItem, false);
                 }
             }
             searchView.IsVisible = false;
             contentView.IsVisible = true;
-            searchBar.Focus();
             _tabCount = 0;
             return false;
         }
 
-        private void listView_ItemDisappearing(object sender, ItemVisibilityEventArgs e)
+        public void AddToSearchBox(string item, bool clear)
         {
+            if (clear)
+            {
+                viewModel.ClearFilterItem();
+                searchBox.Children.Clear();
+            }
+            viewModel.AddFilterItem(item);
+            searchBox.Children.Add(new SearchBoxLabel(item, viewModel));
         }
 
         private async void LabelTapped(object sender, EventArgs e)
@@ -224,13 +234,42 @@ namespace DerpViewer.Views
             int selectedindex = dis.FindIndex(i => i == select);
             if (selectedindex < 0) return;
             DerpTag selectedModel = models[selectedindex];
-            viewModel.AddKey(selectedModel.NameEn);
-            searchBar.Focus();
+            AddToSearchBox(selectedModel.NameEn, false);
         }
 
         private void SearchBox_ChildAdded(object sender, ElementEventArgs e)
         {
+            SearchAction();
+        }
 
+        private async void SearchAction()
+        {
+            listView.IsRefreshing = true;
+            await viewModel.Search();
+            listView.IsRefreshing = false;
+        }
+    }
+
+    class SearchBoxLabel : Label
+    {
+        static Thickness margin = new Thickness(5, 0);
+        string key;
+        DerpImagesViewModel viewModel;
+        public SearchBoxLabel(string model, DerpImagesViewModel viewModel)
+        {
+            this.Margin = margin;
+            this.key = model;
+            this.viewModel = viewModel;
+            this.Text = model;
+            this.GestureRecognizers.Add(new TapGestureRecognizer()
+            {
+                Command = new Command(() =>
+                {
+                    viewModel.RemoveFilterItem(key);
+                    ((FlexLayout)Parent).Children.Remove(this);
+                }),
+                NumberOfTapsRequired = 1
+            });
         }
     }
 }

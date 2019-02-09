@@ -16,19 +16,25 @@ namespace DerpViewer.ViewModels
 {
     class DerpImagesViewModel : BaseViewModel
     {
-        DerpibooruService derpibooru;
-        DerpFileService fileService = new DerpFileService();
-        object lockobject = new object();
-        object downlaodLockObject = new object();
-        bool downloading;
-        List<DerpImage> downloadList = new List<DerpImage>();
-        int page = 0;
-        DerpSortBy sortBy = DerpSortBy.CREATE;
-        DerpSortOrder sortOrder = DerpSortOrder.DESC;
-        bool searchmode;
+        private DerpibooruService derpibooru;
+        private DerpFileService fileService = new DerpFileService();
+        private object lockobject = new object();
+        private object downlaodLockObject = new object();
+        private bool downloading;
+        private List<DerpImage> downloadList = new List<DerpImage>();
+        private int page = 0;
+        private DerpSortBy sortBy = DerpSortBy.CREATE;
+        private DerpSortOrder sortOrder = DerpSortOrder.DESC;
 
-        bool progressBarIsVisible;
-        int progressBarHeight;
+        private bool searchmode;
+        private float progress1, progress2;
+        private bool progressBarIsVisible;
+        private int progressBarHeight;
+        private ObservableCollection<DerpImage> _images;
+        private List<DerpTag> suggestionItem;
+        private List<string> _tempKeys = new List<string>();
+        private string _key;
+
         public bool ProgressBarIsVisible
         {
             get
@@ -53,8 +59,6 @@ namespace DerpViewer.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        float progress1, progress2;
         public float Progress1
         {
             get
@@ -79,7 +83,6 @@ namespace DerpViewer.ViewModels
                 OnPropertyChanged();
             }
         }
-        private ObservableCollection<DerpImage> _images;
         public ObservableCollection<DerpImage> Images
         {
             get
@@ -92,7 +95,6 @@ namespace DerpViewer.ViewModels
                 OnPropertyChanged();
             }
         }
-        List<DerpTag> suggestionItem;
         public List<DerpTag> SuggestionItems
         {
             get { return suggestionItem; }
@@ -103,46 +105,60 @@ namespace DerpViewer.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        string CurrentKey;
-        string key;
-        public string Key { get { return key; } set { key = value; OnPropertyChanged(); } }
+        public string CurrentKey { get; set; }
+        public string Key { get { return _key; } set { _key = value; OnPropertyChanged(); } }
 
         public DerpImagesViewModel(IWebConnection web)
         {
+            CurrentKey = string.Empty;
             derpibooru = new DerpibooruService(web);
         }
 
-        public async Task LastedView()
+
+        public async Task<bool> ExecuteLoadItemsCommand()
         {
-            page = 1;
-            endPage = false;
-            searchmode = false;
-            if(Images != null)
+            if (IsBusy)
+                return false;
+            IsBusy = true;
+            try
             {
-                Images.Clear();
+                page = 1;
+                endPage = false;
+                searchmode = true;
+                if(CurrentKey.Length == 0)
+                    CurrentKey = "*";
+                Images = new ObservableCollection<DerpImage>(await derpibooru.GetSearchImage(UserAPIKey, CurrentKey, page, sortBy, sortOrder) ?? new List<DerpImage>());
                 GC.Collect();
                 await ImageService.Instance.InvalidateCacheAsync(CacheType.All);
             }
-            Images = new ObservableCollection<DerpImage>(await derpibooru.GetSearchImage(UserAPIKey, "*", page, sortBy, sortOrder));
-        }
-        
-        public async void Search()
-        {
-            if (Key.Length != 0)
+            catch
             {
-                CurrentKey = Key.Trim(' ', ',');
-                endPage = false;
-                searchmode = true;
-                page = 1;
-                if (Images != null)
-                {
-                    Images.Clear();
-                    GC.Collect();
-                    await ImageService.Instance.InvalidateCacheAsync(CacheType.All);
-                }
-                Images = new ObservableCollection<DerpImage>(await derpibooru.GetSearchImage(UserAPIKey, CurrentKey, page, sortBy, sortOrder) ?? new List<DerpImage>());
             }
+            finally
+            {
+                IsBusy = false;
+            }
+            return true;
+        }
+
+        public async Task Search()
+        {
+            if (_tempKeys.Count != 0)
+            {
+                CurrentKey = string.Empty;
+                foreach (string str in _tempKeys)
+                {
+                    if (CurrentKey.Length == 0)
+                        CurrentKey = str;
+                    else
+                        CurrentKey += ',' + str;
+                }
+            }
+            else
+            {
+                CurrentKey = "*";
+            }
+            await ExecuteLoadItemsCommand();
         }
 
         bool endPage;
@@ -308,79 +324,6 @@ namespace DerpViewer.ViewModels
             }
         }
 
-
-        //private async Task DownloadImageAsync(string directory, string url)
-        //{
-        //    Directory.CreateDirectory(directory);
-        //    string fd = Path.Combine(directory, url.Substring(url.LastIndexOf('/') + 1));
-        //    string fd2 = fd + "_temp";
-        //    string fd3 = fd;
-        //    HttpWebRequest request;
-        //    HttpWebResponse response;
-        //    if (!File.Exists(fd3))
-        //    {
-        //        try
-        //        {
-        //            request = (HttpWebRequest)WebRequest.Create(url);
-        //            request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
-        //            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko";
-        //            response = (HttpWebResponse)request.GetResponse();
-        //            bool bImage = response.ContentType.StartsWith("image", StringComparison.OrdinalIgnoreCase);
-        //            if ((response.StatusCode == HttpStatusCode.OK ||
-        //                response.StatusCode == HttpStatusCode.Moved ||
-        //                response.StatusCode == HttpStatusCode.Redirect)
-        //                && bImage)
-        //            {
-        //                using (Stream inputStream = response.GetResponseStream())
-        //                using (Stream outputStream = File.OpenWrite(fd2))
-        //                {
-        //                    try
-        //                    {
-        //                        int tempsize = 0;
-        //                        byte[] buffer = new byte[4096];
-        //                        int bytesRead;
-        //                        while (true)
-        //                        {
-        //                            bytesRead = inputStream.Read(buffer, 0, buffer.Length);
-        //                            if (bytesRead != 0)
-        //                            {
-        //                                try
-        //                                {
-        //                                    Progress1 = (float)tempsize / inputStream.Length;
-        //                                }
-        //                                catch { }
-        //                                outputStream.Write(buffer, 0, bytesRead);
-        //                                tempsize += bytesRead;
-        //                            }
-        //                            else
-        //                            {
-        //                                Progress1 = 0;
-        //                                break;
-        //                            }
-        //                        }
-        //                    }
-        //                    catch
-        //                    {
-        //                        inputStream.Close();
-        //                        outputStream.Close();
-        //                        return;
-        //                    }
-        //                    inputStream.Close();
-        //                    outputStream.Close();
-        //                }
-        //                File.Move(fd2, fd3);
-        //                if (Device.RuntimePlatform == Device.Android)
-        //                {
-        //                    DependencyService.Get<IMedia>().UpdateGallery(fd3);
-        //                }
-        //            }
-        //        }
-        //        catch
-        //        {
-        //        }
-        //    }
-        //}
-
         public void GetSuggestionItem()
         {
             string key;
@@ -464,6 +407,21 @@ namespace DerpViewer.ViewModels
                 default:
                     break;
             }
+        }
+
+        public void AddFilterItem(string tag)
+        {
+            _tempKeys.Add(tag);
+            Key = "";
+        }
+        public void RemoveFilterItem(string tag)
+        {
+            _tempKeys.Remove(tag);
+        }
+        public void ClearFilterItem()
+        {
+            _tempKeys.Clear();
+            Key = "";
         }
     }
 }
