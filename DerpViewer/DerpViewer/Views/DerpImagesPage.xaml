@@ -50,7 +50,6 @@
                 </ContentView>
                 <ContentView x:Name="contentView" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="true">
                     <StackLayout>
-                        <FlexLayout x:Name="searchBox" Wrap="Wrap" FlowDirection="LeftToRight" ChildAdded="SearchBox_ChildAdded" ChildRemoved="SearchBox_ChildAdded"/>
                         <StackLayout x:Name="progressView" HeightRequest="{Binding ProgressBarHeight}" Margin="-3" IsVisible="{Binding ProgressBarIsVisible}">
                             <ProgressBar x:Name="progressBar1" Progress="{Binding Progress1}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
                             <ProgressBar x:Name="progressBar2" Progress="{Binding Progress2}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
