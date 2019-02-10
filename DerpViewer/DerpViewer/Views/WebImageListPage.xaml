@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DerpViewer.Views.WebImageListPage">
+    <AbsoluteLayout x:Name="abslayout" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+        <ContentView AbsoluteLayout.LayoutBounds="0, 0, 1, 1" AbsoluteLayout.LayoutFlags="All">
+            <StackLayout VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
+                <WebView x:Name="webView" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" />
+            </StackLayout>
+        </ContentView>
+        <ContentView x:Name="buttonView" AbsoluteLayout.LayoutBounds="0,1,1,0.1" AbsoluteLayout.LayoutFlags="All">
+            <OnPlatform x:TypeArguments="View">
+                <On Platform="UWP">
+                    <StackLayout VerticalOptions="EndAndExpand" MinimumHeightRequest="50">
+                        <StackLayout Orientation="Horizontal" FlowDirection="RightToLeft" HorizontalOptions="EndAndExpand">
+                            <Button Text="close" Clicked="Button_Clicked"  HorizontalOptions="EndAndExpand" FontSize="Small" Opacity="0.7"/>
+                        </StackLayout>
+                    </StackLayout>
+                </On>
+            </OnPlatform>
+        </ContentView>
+    </AbsoluteLayout>
+</ContentPage>

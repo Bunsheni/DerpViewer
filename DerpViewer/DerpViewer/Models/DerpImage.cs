@@ -203,6 +203,14 @@ namespace DerpViewer.Models
                 return $"https:{Image}";
             }
         }
+        public string SmallUrl
+        {
+            get
+            {
+                return $"https:{Representations.Small}";
+            }
+        }
+
         public string MediumUrl
         {
             get
@@ -211,6 +219,21 @@ namespace DerpViewer.Models
             }
         }
 
+        public string LargeUrl
+        {
+            get
+            {
+                return $"https:{Representations.Large}";
+            }
+        }
+
+        public string TallUrl
+        {
+            get
+            {
+                return $"https:{Representations.Tall}";
+            }
+        }
 
         public string _artists;
         public string Aritsts
@@ -372,23 +395,91 @@ namespace DerpViewer.Models
             this.IdScoreCreatedAt = derp.IdScoreCreatedAt;
             this.Image = derp.Image;
             this.ThumbUrl = derp.ThumbUrl;
+            this.MediumUrl = derp.MediumUrl;
+            this.LargeUrl = derp.LargeUrl;
+            this.TallUrl = derp.TallUrl;
+            this.SmallUrl = derp.SmallUrl;
             this.ImageUrl = derp.ImageUrl;
             this.Aritsts = derp.Aritsts;
             this.Characters = derp.Characters;
             this.Contents = derp.Contents;
             this.Anothers = derp.Anothers;
+            this.AspectRatio = derp.AspectRatio;
+            this.Width = derp.Width;
+            this.Height = derp.Height;
         }
 
+        public static double staticWidth = 0;
+        public static double staticHeight = 0;
         public string Id { get; set; }
         public string OriginalFormat { get; set; }
         public string IdScoreCreatedAt { get; set; }
         public string Image { get; set; }
         public string ThumbUrl { get; set; }
+        public string SmallUrl { get; set; }
+        public string MediumUrl { get; set; }
+        public string LargeUrl { get; set; }
+        public string TallUrl { get; set; }
         public string ImageUrl { get; set; }
+        public string FitSizeUrl
+        {
+            get
+            {
+                if (OriginalFormat == "gif")
+                    return SmallUrl;
+                else if (AspectRatio < 0.5)
+                    return LargeUrl;
+                else if (AspectRatio < 0.3)
+                    return TallUrl;
+                else
+                    return MediumUrl;
+            }
+        }
         public string Aritsts { get; set; }
         public string Characters { get; set; }
         public string Contents { get; set; }
         public string Anothers { get; set; }
+        public float AspectRatio { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public double StaticWidth
+        {
+            get
+            {
+                if(staticWidth == 0 && staticHeight == 0)
+                {
+                    return Height;
+                }
+                else if(staticWidth != 0)
+                {
+                    return staticWidth;
+                }
+                else
+                {
+                    return (int) (staticHeight * AspectRatio);
+                }
+            }
+        }
+        public double StaticHeight
+        {
+            get
+            {
+                if (staticWidth == 0 && staticHeight == 0)
+                {
+                    return Height;
+                }
+                else if (staticHeight != 0)
+                {
+                    return staticHeight;
+                }
+                else
+                {
+                    return (int)(staticWidth / AspectRatio);
+                }
+            }
+        }
+
+
 
         private bool _isselected;
 

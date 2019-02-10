@@ -5,14 +5,14 @@
              xmlns:local="clr-namespace:DerpViewer.Views"
              x:Class="DerpViewer.Views.DerpImagesPage">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Download" Clicked="Download_Clicked">
+        <ToolbarItem x:Name="downloadToolbarItem" Text="Download" Clicked="Download_Clicked">
             <ToolbarItem.Icon>
                 <OnPlatform x:TypeArguments="FileImageSource">
                     <On Platform="UWP" Value="Icon\Download.png"/>
                 </OnPlatform>
             </ToolbarItem.Icon>
         </ToolbarItem>
-        <ToolbarItem Text="ClearSelect" Clicked="ClearSelect_Clicked">
+        <ToolbarItem x:Name="clearSelectToolbarItem" Text="ClearSelect" Clicked="ClearSelect_Clicked">
             <ToolbarItem.Icon>
                 <OnPlatform x:TypeArguments="FileImageSource">
                     <On Platform="UWP" Value="Icon\refresh.png"/>
@@ -29,6 +29,7 @@
 
         <ToolbarItem Order="Secondary" Text="Link Copy" Clicked="LinkCopy_Clicked"/>
         <ToolbarItem Order="Secondary" Text="Html Copy" Clicked="HtmlCopy_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="View" Clicked="View_Clicked"/>
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
         <StackLayout>
@@ -65,8 +66,11 @@
                                   HasUnevenRows="true"
                                   SelectionMode="None"
                                   ItemAppearing="listView_ItemAppearing"
+                                  ItemDisappearing="ListView_ItemDisappearing"
                                   IsPullToRefreshEnabled="true"
-                                  ItemTapped="listView_ItemTapped">
+                                  ItemTapped="listView_ItemTapped"
+                                  SizeChanged="ListView_SizeChanged"
+                                  >
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <ViewCell>
@@ -113,6 +117,39 @@
                             </ListView.ItemTemplate>
                         </ListView>
                     </StackLayout>
+                </ContentView>
+                <ContentView x:Name="contentView2" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="false">
+                    <ListView x:Name="listView2" Margin="0" 
+                                  ItemsSource="{Binding Images}"
+                                  HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
+                                  HasUnevenRows="true"
+                                  SelectionMode="None"
+                                  ItemAppearing="listView_ItemAppearing"
+                                  ItemDisappearing="ListView_ItemDisappearing"
+                                  IsPullToRefreshEnabled="true"
+                                  ItemTapped="listView_ItemTapped"
+                                  SizeChanged="ListView_SizeChanged"
+                                  >
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <ViewCell>
+                                    <StackLayout HorizontalOptions="CenterAndExpand">
+                                        <ffimageloading:CachedImage  
+                                                HorizontalOptions="Center" VerticalOptions="Center"
+                                                Aspect="AspectFit"
+			                                    ClassId="{Binding Id}"
+                                                WidthRequest="{Binding StaticWidth}"
+                                                HeightRequest="{Binding StaticHeight}"
+                                                Source="{Binding FitSizeUrl}">
+                                            <ffimageloading:CachedImage.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
+                                            </ffimageloading:CachedImage.GestureRecognizers>
+                                        </ffimageloading:CachedImage>
+                                    </StackLayout>
+                                </ViewCell>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                 </ContentView>
             </AbsoluteLayout>
         </StackLayout>

@@ -10,6 +10,8 @@ using DerpViewer.ViewModels;
 using DerpViewer.Services;
 using FFImageLoading.Forms;
 using System.Collections.Generic;
+using FFImageLoading;
+using FFImageLoading.Cache;
 
 namespace DerpViewer.Views
 {
@@ -20,7 +22,7 @@ namespace DerpViewer.Views
         protected MainPage RootPage { get => Application.Current.MainPage as MainPage; }
         DerpImagesViewModel viewModel;
         int _tabCount;
-        bool pageLock;
+        bool pageLock, viewMode;
         string tabbedSuggestionItem;
         DerpImage tabbedImage;
         ImageSource tabbedImageSource;
@@ -33,6 +35,11 @@ namespace DerpViewer.Views
             {
                 await viewModel.ExecuteLoadItemsCommand();
                 listView.IsRefreshing = false;
+            });
+            listView2.RefreshCommand = new Command(async () =>
+            {
+                await viewModel.ExecuteLoadItemsCommand();
+                listView2.IsRefreshing = false;
             });
         }
 
@@ -103,11 +110,15 @@ namespace DerpViewer.Views
                 Task.Run(() => viewModel.GetSuggestionItem());
                 searchView.IsVisible = true;
                 contentView.IsVisible = false;
+                contentView2.IsVisible = false;
             }
             else
             {
                 searchView.IsVisible = false;
-                contentView.IsVisible = true;
+                if (viewMode)
+                    contentView.IsVisible = true;
+                else
+                    contentView2.IsVisible = true;
             }
         }
 
@@ -118,7 +129,10 @@ namespace DerpViewer.Views
             {
                 AddToSearchBox(searchBar.Text.Trim(), false);
             }
-            contentView.IsVisible = true;
+            if (viewMode)
+                contentView.IsVisible = true;
+            else
+                contentView2.IsVisible = true;
         }
 
         private void listView_ItemTapped(object sender, ItemTappedEventArgs e)
@@ -131,6 +145,18 @@ namespace DerpViewer.Views
         private void listView_ItemAppearing(object sender, ItemVisibilityEventArgs e)
         {
             viewModel.listViewItemAppearing(e.Item);
+        }
+
+        int cashCount = 0;
+        private async void ListView_ItemDisappearing(object sender, ItemVisibilityEventArgs e)
+        {
+            cashCount++;
+            if(cashCount > 10)
+            {
+                GC.Collect();
+                await ImageService.Instance.InvalidateCacheAsync(CacheType.All);
+                cashCount = 0;
+            }
         }
 
         private void suggestionListView_ItemTapped(object sender, ItemTappedEventArgs e)
@@ -165,7 +191,10 @@ namespace DerpViewer.Views
                 }
             }
             searchView.IsVisible = false;
-            contentView.IsVisible = true;
+            if(viewMode)
+                contentView.IsVisible = true;
+            else
+                contentView2.IsVisible = true;
             _tabCount = 0;
             return false;
         }
@@ -224,8 +253,10 @@ namespace DerpViewer.Views
         private async void SearchAction()
         {
             listView.IsRefreshing = true;
+            listView2.IsRefreshing = true;
             await viewModel.Search();
             listView.IsRefreshing = false;
+            listView2.IsRefreshing = false;
         }
 
         private void Download_Clicked(object sender, EventArgs e)
@@ -257,6 +288,35 @@ namespace DerpViewer.Views
         private void HtmlCopy_Clicked(object sender, EventArgs e)
         {
             viewModel.HtmlCopy();
+        }
+
+        private void ListView_SizeChanged(object sender, EventArgs e)
+        {
+            if(viewMode)
+                DerpImage.staticWidth = listView2.Width;
+            else
+                DerpImage.staticWidth = listView.Width;
+
+        }
+
+        private void View_Clicked(object sender, EventArgs e)
+        {
+            viewMode = !viewMode;
+            if (viewMode)
+            {
+                contentView.IsVisible = false;
+                contentView2.IsVisible = true;
+                downloadToolbarItem.Text = string.Empty;
+                clearSelectToolbarItem.Text = string.Empty;
+            }
+            else
+            {
+                contentView.IsVisible = true;
+                contentView2.IsVisible = false;
+                downloadToolbarItem.Text = "Download";
+                clearSelectToolbarItem.Text = "ClearSelect";
+            }
+
         }
     }
 

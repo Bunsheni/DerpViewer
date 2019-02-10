@@ -17,4 +17,10 @@
     <PackageReference Include="Xamarin.FFImageLoading.Forms" Version="2.4.4.859" />
     <PackageReference Include="Xamarin.Forms" Version="3.4.0.1008975" />  
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\WebImageListPage.xaml.cs">
+      <DependentUpon>WebImageListPage.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>
