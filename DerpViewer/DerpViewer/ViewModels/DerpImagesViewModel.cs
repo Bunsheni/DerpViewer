@@ -11,6 +11,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Forms;
+using Xamarin.Essentials;
 
 namespace DerpViewer.ViewModels
 {
@@ -382,6 +383,44 @@ namespace DerpViewer.ViewModels
                     }
                 }
             }
+        }
+
+        public async void LinkCopy()
+        {
+            string res = string.Empty;
+            lock (lockobject)
+            {
+                foreach (DerpImage image in Images)
+                {
+                    if (image.IsSelected)
+                    {
+                        if (res.Length == 0)
+                            res = image.ImageUrl;
+                        else
+                            res += '\n' + image.ImageUrl;
+                    }
+                }
+            }
+            await Clipboard.SetTextAsync(res);
+        }
+
+        public async void HtmlCopy()
+        {
+            string res = string.Empty;
+            lock (lockobject)
+            {
+                foreach (DerpImage image in Images)
+                {
+                    if (image.IsSelected)
+                    {
+                        if (res.Length == 0)
+                            res = $"<img src=\"{image.ImageUrl}\">";
+                        else
+                            res += $"<img src=\"{image.ImageUrl}\">";
+                    }
+                }
+            }
+            await Clipboard.SetTextAsync(res);
         }
 
         public void Sort(int i)

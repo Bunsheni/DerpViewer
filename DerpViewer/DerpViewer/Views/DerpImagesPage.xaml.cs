@@ -57,7 +57,7 @@ namespace DerpViewer.Views
             return await webView.GetWebClintContentsAsync(url);
         }
 
-        private void TapGestureRecognizer_Tapped(object sender, EventArgs e)
+        private void ImageTapGestureRecognizer_Tapped(object sender, EventArgs e)
         {
             if (_tabCount < 1)
             {
@@ -127,32 +127,11 @@ namespace DerpViewer.Views
             listView.SelectedItem = null;
         }
 
-        private void Download_Clicked(object sender, EventArgs e)
-        {
-            Task.Run(() => viewModel.Download());
-        }
-
-        private async void Sort_Clicked(object sender, EventArgs e)
-        {
-            string temp = await DisplayActionSheet("SortBy", "Cancle", null, DerpibooruService.sortbyen);
-            if(temp != null)
-            {
-                int tempint = DerpibooruService.sortbyen.ToList().FindIndex(i => string.Compare(i, temp) == 0);
-                viewModel.Sort(tempint);
-                SearchAction();
-            }
-        }
 
         private void listView_ItemAppearing(object sender, ItemVisibilityEventArgs e)
         {
             viewModel.listViewItemAppearing(e.Item);
         }
-
-        private void ClearSelect_Clicked(object sender, EventArgs e)
-        {
-            viewModel.ClearSelect();
-        }
-
 
         private void suggestionListView_ItemTapped(object sender, ItemTappedEventArgs e)
         {
@@ -247,6 +226,37 @@ namespace DerpViewer.Views
             listView.IsRefreshing = true;
             await viewModel.Search();
             listView.IsRefreshing = false;
+        }
+
+        private void Download_Clicked(object sender, EventArgs e)
+        {
+            Task.Run(() => viewModel.Download());
+        }
+
+        private async void Sort_Clicked(object sender, EventArgs e)
+        {
+            string temp = await DisplayActionSheet("SortBy", "Cancle", null, DerpibooruService.sortbyen);
+            if (temp != null)
+            {
+                int tempint = DerpibooruService.sortbyen.ToList().FindIndex(i => string.Compare(i, temp) == 0);
+                viewModel.Sort(tempint);
+                SearchAction();
+            }
+        }
+
+        private void ClearSelect_Clicked(object sender, EventArgs e)
+        {
+            viewModel.ClearSelect();
+        }
+
+        private void LinkCopy_Clicked(object sender, EventArgs e)
+        {
+            viewModel.LinkCopy();
+        }
+
+        private void HtmlCopy_Clicked(object sender, EventArgs e)
+        {
+            viewModel.HtmlCopy();
         }
     }
 
