@@ -53,7 +53,7 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </ContentView>
-                <ContentView x:Name="contentView" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="true">
+                <ContentView x:Name="contentView" Padding="1" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="true">
                     <StackLayout>
                         <FlexLayout x:Name="searchBox" Wrap="Wrap" FlowDirection="LeftToRight" ChildAdded="SearchBox_ChildAdded" ChildRemoved="SearchBox_ChildAdded"/>
                         <StackLayout x:Name="progressView" HeightRequest="{Binding ProgressBarHeight}" Margin="-3" IsVisible="{Binding ProgressBarIsVisible}">
@@ -119,7 +119,7 @@
                     </StackLayout>
                 </ContentView>
                 <ContentView x:Name="contentView2" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="false">
-                    <ListView x:Name="listView2" Margin="0" 
+                    <ListView x:Name="listView2"
                                   ItemsSource="{Binding Images}"
                                   HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
                                   HasUnevenRows="true"
@@ -133,7 +133,7 @@
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <ViewCell>
-                                    <StackLayout HorizontalOptions="CenterAndExpand">
+                                    <StackLayout HorizontalOptions="CenterAndExpand" BackgroundColor="{Binding BackgroundColor}">
                                         <ffimageloading:CachedImage  
                                                 HorizontalOptions="Center" VerticalOptions="Center"
                                                 Aspect="AspectFit"
@@ -145,6 +145,7 @@
                                                 <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
                                             </ffimageloading:CachedImage.GestureRecognizers>
                                         </ffimageloading:CachedImage>
+                                        <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start" Margin="0,0,0,5"/>
                                     </StackLayout>
                                 </ViewCell>
                             </DataTemplate>

@@ -452,11 +452,14 @@ namespace DerpViewer.Models
                 }
                 else if(staticWidth != 0)
                 {
-                    return staticWidth;
+                    if (Width < staticWidth)
+                        return Width;
+                    else
+                        return staticWidth;
                 }
                 else
                 {
-                    return (int) (staticHeight * AspectRatio);
+                    return (int) (StaticHeight * AspectRatio);
                 }
             }
         }
@@ -470,11 +473,14 @@ namespace DerpViewer.Models
                 }
                 else if (staticHeight != 0)
                 {
-                    return staticHeight;
+                    if (Height < staticHeight)
+                        return Height;
+                    else
+                        return staticHeight;
                 }
                 else
                 {
-                    return (int)(staticWidth / AspectRatio);
+                    return (int)(StaticWidth / AspectRatio);
                 }
             }
         }

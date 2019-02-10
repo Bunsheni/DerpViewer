@@ -306,15 +306,11 @@ namespace DerpViewer.Views
             {
                 contentView.IsVisible = false;
                 contentView2.IsVisible = true;
-                ToolbarItems.Remove(downloadToolbarItem);
-                ToolbarItems.Remove(clearSelectToolbarItem);
             }
             else
             {
                 contentView.IsVisible = true;
                 contentView2.IsVisible = false;
-                ToolbarItems.Add(downloadToolbarItem);
-                ToolbarItems.Add(clearSelectToolbarItem);
             }
 
         }
