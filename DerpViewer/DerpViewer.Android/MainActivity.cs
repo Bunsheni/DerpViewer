@@ -9,6 +9,7 @@ using Android.OS;
 using Android.Support.V4.App;
 using Android;
 using Android.Support.Design.Widget;
+using Android.Content;
 
 namespace DerpViewer.Droid
 {
@@ -36,6 +37,13 @@ namespace DerpViewer.Droid
             base.OnCreate(savedInstanceState);
             global::Xamarin.Forms.Forms.Init(this, savedInstanceState);
             LoadApplication(new App());
+        }
+
+        public override void OnTrimMemory([GeneratedEnum] TrimMemory level)
+        {
+            FFImageLoading.ImageService.Instance.InvalidateMemoryCache();
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            base.OnTrimMemory(level);
         }
     }
 }

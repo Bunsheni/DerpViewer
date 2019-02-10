@@ -79,5 +79,21 @@ namespace DerpViewer.Models
             key = key.Replace(" ", "").ToLower();
             return NameEn.Replace(" ", "").ToLower().StartsWith(key) || NameKr.Replace(" ", "").ToLower().StartsWith(key);
         }
+
+        public DerpTag()
+        {
+            Id = string.Empty;
+            NameEn = NameKr = string.Empty;
+            DescriptionEn = DescriptionKr = string.Empty;
+            Category = DerpTagCategory.UNKNOWN;
+        }
+
+        public DerpTag(string name)
+        {
+            Id = string.Empty;
+            NameEn = NameKr = name;
+            DescriptionEn = DescriptionKr = string.Empty;
+            Category = DerpTagCategory.UNKNOWN;
+        }
     }
 }

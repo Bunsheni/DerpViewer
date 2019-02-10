@@ -121,9 +121,10 @@ namespace DerpViewer.Views
         private void SearchBar_SearchButtonPressed(object sender, EventArgs e)
         {
             searchView.IsVisible = false;
-            if (searchBar.Text.Trim().Length != 0)
+            string temp = searchBar.Text.Trim();
+            if (searchBar.Text.Trim().Length != 0 && !viewModel.ExistItem(temp))
             {
-                AddToSearchBox(searchBar.Text.Trim(), false);
+                AddToSearchBox(temp, false);
             }
             contentView.IsVisible = true;
         }
@@ -136,22 +137,52 @@ namespace DerpViewer.Views
             clearSelectToolbarItem.Text = selected > 0 ? selected +" Selected" : "ClearSelect";
         }
 
-
+        int _lastItemAppearedIdx;
+        bool _lastItemLock;
         private void listView_ItemAppearing(object sender, ItemVisibilityEventArgs e)
         {
             viewModel.listViewItemAppearing(e.Item);
+            var currentIdx = viewModel.Images.IndexOf((DerpImage)e.Item);
+
+            if (!_lastItemLock || _lastItemAppearedIdx == 0)
+            {
+                if (currentIdx > _lastItemAppearedIdx)
+                {
+                    if (_lastItemAppearedIdx != 0)
+                    {
+                        viewModel.HasNavigationBar = false;
+                        searchBar.IsVisible = false;
+                        progressView.IsVisible = false;
+                        searchBox.IsVisible = false;
+                    }
+                    else
+                    {
+                        _lastItemAppearedIdx = viewModel.Images.IndexOf((DerpImage)e.Item);
+                        return;
+                    }
+                }
+                else
+                {
+                    viewModel.HasNavigationBar = true;
+                    searchBar.IsVisible = true;
+                    progressView.IsVisible = true;
+                    searchBox.IsVisible = true;
+                }
+                _lastItemLock = true;
+                TimeSpan tt = new TimeSpan(5000000);
+                Device.StartTimer(tt, TimeHandleFuncAsync);
+            }
+
+            _lastItemAppearedIdx = viewModel.Images.IndexOf((DerpImage)e.Item);
+        }
+        private bool TimeHandleFuncAsync()
+        {
+            _lastItemLock = false;
+            return false;
         }
 
-        int cashCount = 0;
-        private async void ListView_ItemDisappearing(object sender, ItemVisibilityEventArgs e)
+        private void ListView_ItemDisappearing(object sender, ItemVisibilityEventArgs e)
         {
-            cashCount++;
-            if(cashCount > 10)
-            {
-                GC.Collect();
-                await ImageService.Instance.InvalidateCacheAsync(CacheType.All);
-                cashCount = 0;
-            }
         }
 
         private void suggestionListView_ItemTapped(object sender, ItemTappedEventArgs e)
@@ -176,13 +207,18 @@ namespace DerpViewer.Views
         {
             if (tabbedSuggestionItem != null)
             {
+                string temp;
                 if (_tabCount > 1)
                 {
-                    AddToSearchBox("-" + tabbedSuggestionItem, false);
+                    temp = "-" + tabbedSuggestionItem;
                 }
                 else
                 {
-                    AddToSearchBox(tabbedSuggestionItem, false);
+                    temp = tabbedSuggestionItem;
+                }
+                if (!viewModel.ExistItem(temp))
+                {
+                    AddToSearchBox(temp, false);
                 }
             }
             searchView.IsVisible = false;
@@ -207,13 +243,15 @@ namespace DerpViewer.Views
             if (pageLock) return;
             pageLock = true;
             List<DerpTag> models = new List<DerpTag>();
-            if (((Label)sender).Text != "unknown artist" && ((Label)sender).Text != "no cotent" && ((Label)sender).Text != "no character" && ((Label)sender).Text != "no tag")
+            if (((Label)sender).Text != "unknown artist" && ((Label)sender).Text != "no content" && ((Label)sender).Text != "no character" && ((Label)sender).Text != "no tag")
             {
                 foreach (string str in Library.stringDivider(((Label)sender).Text, ", "))
                 {
                     DerpTag tag = await viewModel.DerpDb.GetTagFromNameAsync(str);
-                    if(tag != null)
+                    if (tag != null)
                         models.Add(tag);
+                    else
+                        models.Add(new DerpTag(str));
                 }
                 if (models.Count > 0)
                 {
@@ -234,7 +272,10 @@ namespace DerpViewer.Views
             int selectedindex = dis.FindIndex(i => i == select);
             if (selectedindex < 0) return;
             DerpTag selectedModel = models[selectedindex];
-            AddToSearchBox(selectedModel.NameEn, false);
+            if (!viewModel.ExistItem(selectedModel.NameEn))
+            {
+                AddToSearchBox(selectedModel.NameEn, false);
+            }
         }
 
         private void SearchBox_ChildAdded(object sender, ElementEventArgs e)
@@ -289,6 +330,52 @@ namespace DerpViewer.Views
                 DerpImage.staticWidth = listView2.Width;
             else
                 DerpImage.staticWidth = listView.Width;
+
+        }
+
+        private void SwipeGestureRecognizer_Swiped(object sender, SwipedEventArgs e)
+        {
+            switch (e.Direction)
+            {
+                case SwipeDirection.Left:
+                    break;
+                case SwipeDirection.Right:
+                    break;
+                case SwipeDirection.Up:
+                    {
+                        viewModel.HasNavigationBar = false;
+                        searchBar.IsVisible = false;
+                        progressView.IsVisible = false;
+                        searchBox.IsVisible = false;
+                    }
+                    break;
+                case SwipeDirection.Down:
+                    {
+                        viewModel.HasNavigationBar = true;
+                        searchBar.IsVisible = true;
+                        progressView.IsVisible = true;
+                        searchBox.IsVisible = true;
+                    }
+                    break;
+            }
+        }
+
+        private void HideTapped(object sender, EventArgs e)
+        {
+            if (viewModel.HasNavigationBar)
+            {
+                viewModel.HasNavigationBar = false;
+                searchBar.IsVisible = false;
+                progressView.IsVisible = false;
+                searchBox.IsVisible = false;
+            }
+            else
+            {
+                viewModel.HasNavigationBar = true;
+                searchBar.IsVisible = true;
+                progressView.IsVisible = true;
+                searchBox.IsVisible = true;
+            }
 
         }
 

@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
 	         xmlns:ffimageloading="clr-namespace:FFImageLoading.Forms;assembly=FFImageLoading.Forms"
              xmlns:local="clr-namespace:DerpViewer.Views"
-             x:Class="DerpViewer.Views.DerpImagesPage">
+             x:Class="DerpViewer.Views.DerpImagesPage"
+             NavigationPage.HasNavigationBar="{Binding HasNavigationBar}">
     <ContentPage.ToolbarItems>
         <ToolbarItem x:Name="downloadToolbarItem" Text="Download" Clicked="Download_Clicked">
             <ToolbarItem.Icon>
@@ -85,11 +86,7 @@
                                                 </ffimageloading:CachedImage.GestureRecognizers>
                                             </ffimageloading:CachedImage>
                                             <StackLayout HorizontalOptions="StartAndExpand">
-                                                <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start">
-                                                    <Label.GestureRecognizers>
-                                                        <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
-                                                    </Label.GestureRecognizers>
-                                                </Label>
+                                                <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start"/>
                                                 <Label Text='{Binding Aritsts}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
                                                     <Label.GestureRecognizers>
                                                         <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
@@ -137,9 +134,13 @@
 			                                    ClassId="{Binding Id}"
                                                 WidthRequest="{Binding StaticWidth}"
                                                 HeightRequest="{Binding StaticHeight}"
-                                                Source="{Binding FitSizeUrl}">
+                                                Source="{Binding FitSizeUrl}" LoadingPlaceholder="{Binding ThumbUrl}">
                                                 <ffimageloading:CachedImage.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
+                                                    <!--<SwipeGestureRecognizer Direction="Left" Swiped="SwipeGestureRecognizer_Swiped"/>
+                                                    <SwipeGestureRecognizer Direction="Right" Swiped="SwipeGestureRecognizer_Swiped"/>
+                                                    <SwipeGestureRecognizer Direction="Up" Swiped="SwipeGestureRecognizer_Swiped"/>
+                                                    <SwipeGestureRecognizer Direction="Down" Swiped="SwipeGestureRecognizer_Swiped"/>-->
                                                 </ffimageloading:CachedImage.GestureRecognizers>
                                             </ffimageloading:CachedImage>
                                             <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start" Margin="0,0,0,5"/>

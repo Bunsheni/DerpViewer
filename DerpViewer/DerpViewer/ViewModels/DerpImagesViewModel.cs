@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Forms;
 using Xamarin.Essentials;
+using FFImageLoading.Forms;
 
 namespace DerpViewer.ViewModels
 {
@@ -29,12 +30,25 @@ namespace DerpViewer.ViewModels
 
         private bool searchmode;
         private float progress1, progress2;
-        private bool progressBarIsVisible;
+        private bool progressBarIsVisible, hasNavigationBar;
         private int progressBarHeight;
         private ObservableCollection<DerpImage> _images;
         private List<DerpTag> suggestionItem;
         private List<string> _tempKeys = new List<string>();
         private string _key;
+
+        public bool HasNavigationBar
+        {
+            get
+            {
+                return hasNavigationBar;
+            }
+            set
+            {
+                hasNavigationBar = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool ProgressBarIsVisible
         {
@@ -112,6 +126,7 @@ namespace DerpViewer.ViewModels
         public DerpImagesViewModel(IWebConnection web)
         {
             CurrentKey = string.Empty;
+            HasNavigationBar = true;
             derpibooru = new DerpibooruService(web);
         }
 
@@ -123,14 +138,23 @@ namespace DerpViewer.ViewModels
             IsBusy = true;
             try
             {
+                ObservableCollection<DerpImage> temp = null;
                 page = 1;
                 endPage = false;
                 searchmode = true;
                 if(CurrentKey.Length == 0)
                     CurrentKey = "*";
+                if(Images != null)
+                {
+                    temp = Images;
+                }
                 Images = new ObservableCollection<DerpImage>(await derpibooru.GetSearchImage(UserAPIKey, CurrentKey, page, sortBy, sortOrder) ?? new List<DerpImage>());
-                GC.Collect();
+                if(temp != null)
+                {
+                    temp.Clear();
+                }
                 await ImageService.Instance.InvalidateCacheAsync(CacheType.All);
+                GC.Collect();
             }
             catch
             {
@@ -448,9 +472,14 @@ namespace DerpViewer.ViewModels
             }
         }
 
+        public bool ExistItem(string tag)
+        {
+            return _tempKeys.Contains(tag);
+        }
+
         public void AddFilterItem(string tag)
         {
-            _tempKeys.Add(tag);
+           _tempKeys.Add(tag);
             Key = "";
         }
         public void RemoveFilterItem(string tag)
