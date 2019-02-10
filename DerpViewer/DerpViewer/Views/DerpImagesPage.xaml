@@ -26,6 +26,9 @@
                 </OnPlatform>
             </ToolbarItem.Icon>
         </ToolbarItem>
+
+        <ToolbarItem Order="Secondary" Text="Link Copy" Clicked="LinkCopy_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="Html Copy" Clicked="HtmlCopy_Clicked"/>
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
         <StackLayout>
@@ -74,7 +77,7 @@
 			                                    ClassId="{Binding Id}"
                                                 Source="{Binding ThumbUrl}" LoadingPlaceholder="{Binding ThumbTinyUrl}">
                                                 <ffimageloading:CachedImage.GestureRecognizers>
-                                                    <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
+                                                    <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
                                                 </ffimageloading:CachedImage.GestureRecognizers>
                                             </ffimageloading:CachedImage>
                                             <StackLayout HorizontalOptions="StartAndExpand">
