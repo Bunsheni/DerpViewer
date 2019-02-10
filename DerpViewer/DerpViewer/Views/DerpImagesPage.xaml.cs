@@ -110,15 +110,11 @@ namespace DerpViewer.Views
                 Task.Run(() => viewModel.GetSuggestionItem());
                 searchView.IsVisible = true;
                 contentView.IsVisible = false;
-                contentView2.IsVisible = false;
             }
             else
             {
                 searchView.IsVisible = false;
-                if (viewMode)
-                    contentView.IsVisible = true;
-                else
-                    contentView2.IsVisible = true;
+                contentView.IsVisible = true;
             }
         }
 
@@ -129,16 +125,15 @@ namespace DerpViewer.Views
             {
                 AddToSearchBox(searchBar.Text.Trim(), false);
             }
-            if (viewMode)
-                contentView.IsVisible = true;
-            else
-                contentView2.IsVisible = true;
+            contentView.IsVisible = true;
         }
 
         private void listView_ItemTapped(object sender, ItemTappedEventArgs e)
         {
             ((DerpImage)e.Item).IsSelected ^= true;
             listView.SelectedItem = null;
+            int selected = viewModel.GetSelectedImages().Count;
+            clearSelectToolbarItem.Text = selected > 0 ? selected +" Selected" : "ClearSelect";
         }
 
 
@@ -191,10 +186,7 @@ namespace DerpViewer.Views
                 }
             }
             searchView.IsVisible = false;
-            if(viewMode)
-                contentView.IsVisible = true;
-            else
-                contentView2.IsVisible = true;
+            contentView.IsVisible = true;
             _tabCount = 0;
             return false;
         }
@@ -278,6 +270,7 @@ namespace DerpViewer.Views
         private void ClearSelect_Clicked(object sender, EventArgs e)
         {
             viewModel.ClearSelect();
+            clearSelectToolbarItem.Text = "ClearSelect";
         }
 
         private void LinkCopy_Clicked(object sender, EventArgs e)
@@ -304,15 +297,14 @@ namespace DerpViewer.Views
             viewMode = !viewMode;
             if (viewMode)
             {
-                contentView.IsVisible = false;
-                contentView2.IsVisible = true;
+                listView.IsVisible = false;
+                listView2.IsVisible = true;
             }
             else
             {
-                contentView.IsVisible = true;
-                contentView2.IsVisible = false;
+                listView.IsVisible = true;
+                listView2.IsVisible = false;
             }
-
         }
     }
 
