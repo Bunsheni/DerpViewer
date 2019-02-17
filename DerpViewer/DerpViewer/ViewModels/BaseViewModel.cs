@@ -15,7 +15,7 @@ namespace DerpViewer.ViewModels
     {
         public App RootApp { get => Application.Current as App; }
         public MainPage RootPage { get => Application.Current.MainPage as MainPage; }
-        public DerpSQLiteDb DerpDb { get => RootPage.GetDerpSQLiteDb(); }
+        public DerpTagSQLiteDb DerpDb { get => RootPage.GetDerpSQLiteDb(); }
 
         bool isBusy = false;
         public string UserAPIKey

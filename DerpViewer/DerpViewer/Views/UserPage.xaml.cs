@@ -24,6 +24,17 @@ namespace DerpViewer.Views
                 RootApp.UserAPIKey = value.Trim();
             }
         }
+        public string TagCount
+        {
+            get
+            {
+                return RootApp.TagCount.ToString();
+            }
+            set
+            {
+                RootApp.TagCount = int.Parse(value.Trim());
+            }
+        }
         public bool UsingFilter
         {
             get
@@ -33,6 +44,17 @@ namespace DerpViewer.Views
             set
             {
                 RootApp.UsingFilter = value;
+            }
+        }
+        public bool HideTopbar
+        {
+            get
+            {
+                return RootApp.HideTopbar;
+            }
+            set
+            {
+                RootApp.HideTopbar = value;
             }
         }
 

@@ -41,6 +41,7 @@ namespace DerpViewer.Views
                 await viewModel.ExecuteLoadItemsCommand();
                 listView2.IsRefreshing = false;
             });
+            LockHideNavigationBar(5000000);
         }
 
         protected override async void OnAppearing()
@@ -129,52 +130,90 @@ namespace DerpViewer.Views
             contentView.IsVisible = true;
         }
 
+        private void SelectionChanged()
+        {
+            int selected = viewModel.GetSelectedImages().Count;
+            if (selected > 0)
+            {
+                clearSelectToolbarItem.Text = selected + " Selected";
+                clearSelectToolbarItem.Icon = "Icon\\selected.png";
+            }
+            else
+            {
+                clearSelectToolbarItem.Text = "ClearSelect";
+                clearSelectToolbarItem.Icon = "Icon\\nonselected.png";
+            }
+        }
+
         private void listView_ItemTapped(object sender, ItemTappedEventArgs e)
         {
             ((DerpImage)e.Item).IsSelected ^= true;
             listView.SelectedItem = null;
-            int selected = viewModel.GetSelectedImages().Count;
-            clearSelectToolbarItem.Text = selected > 0 ? selected +" Selected" : "ClearSelect";
+            SelectionChanged();
         }
 
         int _lastItemAppearedIdx;
         bool _lastItemLock;
+        DerpImage selectedItem;
+
         private void listView_ItemAppearing(object sender, ItemVisibilityEventArgs e)
         {
+            selectedItem = e.Item as DerpImage;
             viewModel.listViewItemAppearing(e.Item);
-            var currentIdx = viewModel.Images.IndexOf((DerpImage)e.Item);
 
-            if (!_lastItemLock || _lastItemAppearedIdx == 0)
+            if (viewModel.RootApp.HideTopbar)
             {
-                if (currentIdx > _lastItemAppearedIdx)
+                var currentIdx = viewModel.Images.IndexOf((DerpImage)e.Item);
+
+                if (!_lastItemLock || _lastItemAppearedIdx == 0)
                 {
-                    if (_lastItemAppearedIdx != 0)
+                    if (currentIdx > _lastItemAppearedIdx && _lastItemAppearedIdx != 0)
                     {
-                        viewModel.HasNavigationBar = false;
-                        searchBar.IsVisible = false;
-                        progressView.IsVisible = false;
-                        searchBox.IsVisible = false;
+                        HideNavigationBar();
                     }
                     else
                     {
-                        _lastItemAppearedIdx = viewModel.Images.IndexOf((DerpImage)e.Item);
-                        return;
+                        DisplayNavigationBar();
                     }
+                    LockHideNavigationBar(5000000);
                 }
-                else
-                {
-                    viewModel.HasNavigationBar = true;
-                    searchBar.IsVisible = true;
-                    progressView.IsVisible = true;
-                    searchBox.IsVisible = true;
-                }
-                _lastItemLock = true;
-                TimeSpan tt = new TimeSpan(5000000);
-                Device.StartTimer(tt, TimeHandleFuncAsync);
+                _lastItemAppearedIdx = viewModel.Images.IndexOf((DerpImage)e.Item);
             }
-
-            _lastItemAppearedIdx = viewModel.Images.IndexOf((DerpImage)e.Item);
+            else if(!viewModel.HasNavigationBar)
+            {
+                viewModel.HasNavigationBar = true;
+                searchBar.IsVisible = true;
+                if (viewModel.Downloading)
+                    progressView.IsVisible = true;
+                searchBox.IsVisible = true;
+                _lastItemLock = false;
+            }
         }
+
+        private void DisplayNavigationBar()
+        {
+            viewModel.HasNavigationBar = true;
+            searchBar.IsVisible = true;
+            if (viewModel.Downloading)
+                progressView.IsVisible = true;
+            searchBox.IsVisible = true;
+        }
+
+        private void HideNavigationBar()
+        {
+            viewModel.HasNavigationBar = false;
+            searchBar.IsVisible = false;
+            progressView.IsVisible = false;
+            searchBox.IsVisible = false;
+        }
+
+        private void LockHideNavigationBar(long tick)
+        {
+            _lastItemLock = true;
+            TimeSpan tt = new TimeSpan(tick);
+            Device.StartTimer(tt, TimeHandleFuncAsync);
+        }
+
         private bool TimeHandleFuncAsync()
         {
             _lastItemLock = false;
@@ -229,6 +268,7 @@ namespace DerpViewer.Views
 
         public void AddToSearchBox(string item, bool clear)
         {
+            DisplayNavigationBar();
             if (clear)
             {
                 viewModel.ClearFilterItem();
@@ -236,6 +276,7 @@ namespace DerpViewer.Views
             }
             viewModel.AddFilterItem(item);
             searchBox.Children.Add(new SearchBoxLabel(item, viewModel));
+            searchBox.ForceLayout();
         }
 
         private async void LabelTapped(object sender, EventArgs e)
@@ -255,13 +296,13 @@ namespace DerpViewer.Views
                 }
                 if (models.Count > 0)
                 {
-                    DisplayAndSearch(models);
+                    TagListDisplayAndSearch(models);
                 }
             }
             pageLock = false;
         }
 
-        public async void DisplayAndSearch(List<DerpTag> models)
+        public async void TagListDisplayAndSearch(List<DerpTag> models)
         {
             List<string> dis = new List<string>();
             foreach (DerpTag model in models)
@@ -281,6 +322,7 @@ namespace DerpViewer.Views
         private void SearchBox_ChildAdded(object sender, ElementEventArgs e)
         {
             SearchAction();
+            SelectionChanged();
         }
 
         private async void SearchAction()
@@ -297,6 +339,12 @@ namespace DerpViewer.Views
             Task.Run(() => viewModel.Download());
         }
 
+        private void ClearSelect_Clicked(object sender, EventArgs e)
+        {
+            viewModel.ClearSelect();
+            SelectionChanged();
+        }
+
         private async void Sort_Clicked(object sender, EventArgs e)
         {
             string temp = await DisplayActionSheet("SortBy", "Cancle", null, DerpibooruService.sortbyen);
@@ -308,12 +356,6 @@ namespace DerpViewer.Views
             }
         }
 
-        private void ClearSelect_Clicked(object sender, EventArgs e)
-        {
-            viewModel.ClearSelect();
-            clearSelectToolbarItem.Text = "ClearSelect";
-        }
-
         private void LinkCopy_Clicked(object sender, EventArgs e)
         {
             viewModel.LinkCopy();
@@ -323,62 +365,7 @@ namespace DerpViewer.Views
         {
             viewModel.HtmlCopy();
         }
-
-        private void ListView_SizeChanged(object sender, EventArgs e)
-        {
-            if(viewMode)
-                DerpImage.staticWidth = listView2.Width;
-            else
-                DerpImage.staticWidth = listView.Width;
-
-        }
-
-        private void SwipeGestureRecognizer_Swiped(object sender, SwipedEventArgs e)
-        {
-            switch (e.Direction)
-            {
-                case SwipeDirection.Left:
-                    break;
-                case SwipeDirection.Right:
-                    break;
-                case SwipeDirection.Up:
-                    {
-                        viewModel.HasNavigationBar = false;
-                        searchBar.IsVisible = false;
-                        progressView.IsVisible = false;
-                        searchBox.IsVisible = false;
-                    }
-                    break;
-                case SwipeDirection.Down:
-                    {
-                        viewModel.HasNavigationBar = true;
-                        searchBar.IsVisible = true;
-                        progressView.IsVisible = true;
-                        searchBox.IsVisible = true;
-                    }
-                    break;
-            }
-        }
-
-        private void HideTapped(object sender, EventArgs e)
-        {
-            if (viewModel.HasNavigationBar)
-            {
-                viewModel.HasNavigationBar = false;
-                searchBar.IsVisible = false;
-                progressView.IsVisible = false;
-                searchBox.IsVisible = false;
-            }
-            else
-            {
-                viewModel.HasNavigationBar = true;
-                searchBar.IsVisible = true;
-                progressView.IsVisible = true;
-                searchBox.IsVisible = true;
-            }
-
-        }
-
+                
         private void View_Clicked(object sender, EventArgs e)
         {
             viewMode = !viewMode;
@@ -386,12 +373,23 @@ namespace DerpViewer.Views
             {
                 listView.IsVisible = false;
                 listView2.IsVisible = true;
+                listView2.ScrollTo(selectedItem, ScrollToPosition.Start, false);
             }
             else
             {
                 listView.IsVisible = true;
                 listView2.IsVisible = false;
+                listView.ScrollTo(selectedItem, ScrollToPosition.Start, false);
             }
+        }
+
+        private void ListView_SizeChanged(object sender, EventArgs e)
+        {
+            if (viewMode)
+                DerpImage.staticWidth = listView2.Width;
+            else
+                DerpImage.staticWidth = listView.Width;
+
         }
     }
 

@@ -10,6 +10,8 @@ namespace DerpViewer
     {
         private const string UserAPIKeyKey = "UserAPIKey";
         private const string UsingFilterKey = "UsingFilter";
+        private const string HideTopbarKey = "HideTopbar";
+        private const string TagCountKey = "TagCount";
 
         public string UserAPIKey
         {
@@ -46,6 +48,38 @@ namespace DerpViewer
             set
             {
                 Properties[UsingFilterKey] = value;
+                SavePropertiesAsync();
+            }
+        }
+        public bool HideTopbar
+        {
+            get
+            {
+                if (Properties.ContainsKey(HideTopbarKey)
+                    && Properties[HideTopbarKey] != null)
+                    return (bool)Properties[HideTopbarKey];
+                else
+                    return false;
+            }
+            set
+            {
+                Properties[HideTopbarKey] = value;
+                SavePropertiesAsync();
+            }
+        }
+        public int TagCount
+        {
+            get
+            {
+                if (Properties.ContainsKey(TagCountKey)
+                    && Properties[TagCountKey] != null)
+                    return (int)Properties[TagCountKey];
+                else
+                    return 10000;
+            }
+            set
+            {
+                Properties[TagCountKey] = value;
                 SavePropertiesAsync();
             }
         }

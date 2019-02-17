@@ -20,9 +20,9 @@ namespace DerpViewer.ViewModels
     {
         private DerpibooruService derpibooru;
         private DerpFileService fileService = new DerpFileService();
+        private DerpImageSQLiteDb imageDbService = new DerpImageSQLiteDb();
         private object lockobject = new object();
         private object downlaodLockObject = new object();
-        private bool downloading;
         private List<DerpImage> downloadList = new List<DerpImage>();
         private int page = 0;
         private DerpSortBy sortBy = DerpSortBy.CREATE;
@@ -36,6 +36,8 @@ namespace DerpViewer.ViewModels
         private List<DerpTag> suggestionItem;
         private List<string> _tempKeys = new List<string>();
         private string _key;
+
+        public bool Downloading { get; private set; }
 
         public bool HasNavigationBar
         {
@@ -236,6 +238,7 @@ namespace DerpViewer.ViewModels
             }
             return res;
         }
+
         public void Download()
         {
             foreach (DerpImage image in GetSelectedImages())
@@ -250,11 +253,27 @@ namespace DerpViewer.ViewModels
                 DownloadRun();
         }
 
+        public async void Download2()
+        {
+            await imageDbService.CreatDerpImageInfoTable();
+            foreach (DerpImage image in GetSelectedImages())
+            {
+                lock (downlaodLockObject)
+                {
+                    if (!downloadList.Exists(i => i == image))
+                        downloadList.Add(image);
+                }
+            }
+            if (downloadList.Count > 0)
+                await DownloadRun2();
+            imageDbService.Close();
+        }
+
         public async void DownloadRun()
         {
-            if (!downloading)
+            if (!Downloading)
             {
-                downloading = true;
+                Downloading = true;
                 ProgressBarHeight = 8;
                 ProgressBarIsVisible = true;
                 int i = 0;
@@ -275,7 +294,42 @@ namespace DerpViewer.ViewModels
                 Progress2 = 0;
                 ProgressBarIsVisible = false;
                 ProgressBarHeight = 0;
-                downloading = false;
+                Downloading = false;
+            }
+        }
+
+        public async Task DownloadRun2()
+        {
+            if (!Downloading)
+            {
+                Downloading = true;
+                ProgressBarHeight = 8;
+                ProgressBarIsVisible = true;
+                int i = 0;
+                while (true)
+                {
+                    byte[] temp = GetByteArrayFromUrl(DependencyService.Get<ISQLiteDb>().GetDocumentsPath(), $"https:{downloadList[i].Image}");
+                    if (temp != null)
+                    {
+                        //downloadList[i].ByteArray = temp;
+                        //await imageDbService.InsertImageAsync(downloadList[i]);
+                    }
+
+                    lock (downlaodLockObject)
+                    {
+                        i++;
+                        Progress2 = (float)i / downloadList.Count;
+                        if (i >= downloadList.Count)
+                        {
+                            downloadList.Clear();
+                            break;
+                        }
+                    }
+                }
+                Progress2 = 0;
+                ProgressBarIsVisible = false;
+                ProgressBarHeight = 0;
+                Downloading = false;
             }
         }
 
@@ -347,6 +401,72 @@ namespace DerpViewer.ViewModels
                 {
                 }
             }
+        }
+
+        private byte[] GetByteArrayFromUrl(string directory, string url)
+        {
+            string fileName = url.Substring(url.LastIndexOf('/') + 1);
+            string filePath = Path.Combine(directory, fileName);
+            HttpWebRequest request;
+            HttpWebResponse response;
+            if (!File.Exists(filePath))
+            {
+                try
+                {
+                    request = (HttpWebRequest)WebRequest.Create(url);
+                    request.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
+                    request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko";
+                    response = (HttpWebResponse)request.GetResponse();
+                    bool bImage = response.ContentType.StartsWith("image", StringComparison.OrdinalIgnoreCase);
+                    if ((response.StatusCode == HttpStatusCode.OK ||
+                        response.StatusCode == HttpStatusCode.Moved ||
+                        response.StatusCode == HttpStatusCode.Redirect)
+                        && bImage)
+                    {
+                        using (Stream inputStream = response.GetResponseStream())
+                        {
+                            try
+                            {
+                                int tempsize = 0;
+                                int tempsize2 = (int) inputStream.Length;
+                                byte[] buffer = new byte[4096];
+                                byte[] ImageLargeArray = new byte[inputStream.Length];
+                                int bytesRead;
+                                while (true)
+                                {
+                                    if (tempsize2 > 0)
+                                    {
+                                        bytesRead = inputStream.Read(ImageLargeArray, tempsize, tempsize2 < 4096 ? tempsize2 : 4096);
+                                        try
+                                        {
+                                            Progress1 = (float)tempsize / inputStream.Length;
+                                        }
+                                        catch { }
+                                        tempsize += bytesRead;
+                                        tempsize2 -= bytesRead;
+                                    }
+                                    else
+                                    {
+                                        Progress1 = 0;
+                                        break;
+                                    }
+                                }
+                                inputStream.Close();
+                                return ImageLargeArray;
+                            }
+                            catch
+                            {
+                                inputStream.Close();
+                                return null;
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            }
+            return null;
         }
 
         public void GetSuggestionItem()

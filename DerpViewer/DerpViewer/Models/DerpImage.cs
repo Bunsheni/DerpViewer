@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Xamarin.Forms;
+using SQLite;
+
 
 namespace DerpViewer.Models
 {
@@ -322,9 +324,9 @@ namespace DerpViewer.Models
                     else if (tagstr[i].StartsWith("spoiler:"))
                     {
                         if (_contents.Length == 0)
-                            _contents = tagstr[i].Substring(8);
+                            _contents = tagstr[i];
                         else
-                            _contents += ", " + tagstr[i].Substring(8);
+                            _contents += ", " + tagstr[i];
                     }
                     else if (tagstr[i] == "oc" || tagstr[i] == "oc only")
                     {
@@ -384,8 +386,20 @@ namespace DerpViewer.Models
         }
     }
 
+    public class ImageArray
+    {
+        [PrimaryKey]
+        public string Id { get; set; }
+        public byte[] ByteArray { get; set; }
+    }
+
+
     public class DerpImage : INotifyPropertyChanged
     {
+
+        public DerpImage()
+        {
+        }
 
         public DerpImage(DerpImageCpt derp)
         {
@@ -395,10 +409,10 @@ namespace DerpViewer.Models
             this.IdScoreCreatedAt = derp.IdScoreCreatedAt;
             this.Image = derp.Image;
             this.ThumbUrl = derp.ThumbUrl;
+            this.SmallUrl = derp.SmallUrl;
             this.MediumUrl = derp.MediumUrl;
             this.LargeUrl = derp.LargeUrl;
             this.TallUrl = derp.TallUrl;
-            this.SmallUrl = derp.SmallUrl;
             this.ImageUrl = derp.ImageUrl;
             this.Aritsts = derp.Aritsts;
             this.Characters = derp.Characters;
@@ -411,8 +425,11 @@ namespace DerpViewer.Models
 
         public static double staticWidth = 0;
         public static double staticHeight = 0;
+
+        [PrimaryKey]
         public string Id { get; set; }
         public string OriginalFormat { get; set; }
+        [Ignore]
         public string IdScoreCreatedAt { get; set; }
         public string Image { get; set; }
         public string ThumbUrl { get; set; }
@@ -421,6 +438,15 @@ namespace DerpViewer.Models
         public string LargeUrl { get; set; }
         public string TallUrl { get; set; }
         public string ImageUrl { get; set; }
+        public string Aritsts { get; set; }
+        public string Characters { get; set; }
+        public string Contents { get; set; }
+        public string Anothers { get; set; }
+        public float AspectRatio { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+
+        [Ignore]
         public string FitSizeUrl
         {
             get
@@ -431,17 +457,13 @@ namespace DerpViewer.Models
                     return LargeUrl;
                 else if (AspectRatio < 0.3)
                     return TallUrl;
+                else if (AspectRatio < 0.2)
+                    return ImageUrl;
                 else
                     return MediumUrl;
             }
         }
-        public string Aritsts { get; set; }
-        public string Characters { get; set; }
-        public string Contents { get; set; }
-        public string Anothers { get; set; }
-        public float AspectRatio { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
+        [Ignore]
         public double StaticWidth
         {
             get
@@ -463,6 +485,8 @@ namespace DerpViewer.Models
                 }
             }
         }
+
+        [Ignore]
         public double StaticHeight
         {
             get
@@ -484,13 +508,12 @@ namespace DerpViewer.Models
                 }
             }
         }
-
-
-
+               
         private bool _isselected;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        [Ignore]
         public bool IsSelected
         {
             get
@@ -504,6 +527,8 @@ namespace DerpViewer.Models
                 OnPropertyChanged("BackgroundColor");
             }
         }
+
+        [Ignore]
         public Color BackgroundColor
         {
             get
@@ -511,6 +536,7 @@ namespace DerpViewer.Models
                 return IsSelected ? Color.LightGray : Color.Transparent;
             }
         }
+
         public void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {
             var changed = PropertyChanged;

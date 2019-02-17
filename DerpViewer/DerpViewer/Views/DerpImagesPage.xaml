@@ -16,18 +16,12 @@
         <ToolbarItem x:Name="clearSelectToolbarItem" Text="ClearSelect" Clicked="ClearSelect_Clicked">
             <ToolbarItem.Icon>
                 <OnPlatform x:TypeArguments="FileImageSource">
-                    <On Platform="UWP" Value="Icon\refresh.png"/>
-                </OnPlatform>
-            </ToolbarItem.Icon>
-        </ToolbarItem>
-        <ToolbarItem Text="Sort" Clicked="Sort_Clicked">
-            <ToolbarItem.Icon>
-                <OnPlatform x:TypeArguments="FileImageSource">
-                    <On Platform="UWP" Value="Icon\filter.png"/>
+                    <On Platform="UWP" Value="Icon\nonselected.png"/>
                 </OnPlatform>
             </ToolbarItem.Icon>
         </ToolbarItem>
 
+        <ToolbarItem Order="Secondary" Text="Sort" Clicked="Sort_Clicked"/>
         <ToolbarItem Order="Secondary" Text="Link Copy" Clicked="LinkCopy_Clicked"/>
         <ToolbarItem Order="Secondary" Text="Html Copy" Clicked="HtmlCopy_Clicked"/>
         <ToolbarItem Order="Secondary" Text="View" Clicked="View_Clicked"/>
@@ -35,7 +29,7 @@
     <ContentPage.Content>
         <StackLayout>
             <SearchBar x:Name="searchBar" Text="{Binding Key}" SearchButtonPressed="SearchBar_SearchButtonPressed" TextChanged="searchBar_TextChanged"/>
-            <AbsoluteLayout x:Name="absLayout">
+            <AbsoluteLayout x:Name="absLayout" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
                 <ContentView AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="False">
                     <local:CustomWebView x:Name="webView" HeightRequest="0" WidthRequest="0"/>
                 </ContentView>
@@ -57,13 +51,15 @@
                 <ContentView x:Name="contentView" Padding="1" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="true">
                     <StackLayout>
                         <FlexLayout x:Name="searchBox" Wrap="Wrap" FlowDirection="LeftToRight" ChildAdded="SearchBox_ChildAdded" ChildRemoved="SearchBox_ChildAdded"/>
-                        <StackLayout x:Name="progressView" HeightRequest="{Binding ProgressBarHeight}" Margin="-3" IsVisible="{Binding ProgressBarIsVisible}">
+                        <StackLayout x:Name="progressView" 
+                                     HeightRequest="{Binding ProgressBarHeight}" 
+                                     Margin="-3" 
+                                     IsVisible="{Binding ProgressBarIsVisible}">
                             <ProgressBar x:Name="progressBar1" Progress="{Binding Progress1}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
                             <ProgressBar x:Name="progressBar2" Progress="{Binding Progress2}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
                         </StackLayout>
                         <ListView x:Name="listView" Margin="0" 
                                   ItemsSource="{Binding Images}"
-                                  HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
                                   HasUnevenRows="true"
                                   SelectionMode="None"
                                   ItemAppearing="listView_ItemAppearing"
@@ -137,10 +133,6 @@
                                                 Source="{Binding FitSizeUrl}" LoadingPlaceholder="{Binding ThumbUrl}">
                                                 <ffimageloading:CachedImage.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
-                                                    <!--<SwipeGestureRecognizer Direction="Left" Swiped="SwipeGestureRecognizer_Swiped"/>
-                                                    <SwipeGestureRecognizer Direction="Right" Swiped="SwipeGestureRecognizer_Swiped"/>
-                                                    <SwipeGestureRecognizer Direction="Up" Swiped="SwipeGestureRecognizer_Swiped"/>
-                                                    <SwipeGestureRecognizer Direction="Down" Swiped="SwipeGestureRecognizer_Swiped"/>-->
                                                 </ffimageloading:CachedImage.GestureRecognizers>
                                             </ffimageloading:CachedImage>
                                             <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start" Margin="0,0,0,5"/>

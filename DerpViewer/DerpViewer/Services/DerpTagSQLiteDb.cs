@@ -11,7 +11,7 @@ using Xamarin.Forms;
 
 namespace DerpViewer.Services
 {
-    public class DerpSQLiteDb
+    public class DerpTagSQLiteDb
     {
         private SQLiteAsyncConnection _connection;
         public AutoResetEvent _waitforListComplete;
@@ -20,7 +20,7 @@ namespace DerpViewer.Services
 
         private List<DerpTag> _derpTags;
 
-        public DerpSQLiteDb()
+        public DerpTagSQLiteDb()
         {
             _waitforListComplete = new AutoResetEvent(false);
         }

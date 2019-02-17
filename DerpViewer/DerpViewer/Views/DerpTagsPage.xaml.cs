@@ -93,7 +93,7 @@ namespace DerpViewer.Views
             await Task.Run(async () =>
             {             
                 List<DerpTag> oldTags = (await RootPage.GetDerpSQLiteDb().GetTagsAsync()).FindAll(i => i.Category != DerpTagCategory.NONE && !i.NameEn.StartsWith("artist:") && !i.NameEn.StartsWith("oc:") && !i.NameEn.StartsWith("editor:") && i.Category != DerpTagCategory.ERROR);
-                List<DerpTag> newTags = derpibooru.GetTagInfoFromDerpibooru(oldTags, 10000);
+                List<DerpTag> newTags = derpibooru.GetTagInfoFromDerpibooru(oldTags, RootApp.TagCount);
                 if (newTags != null)
                 {
                     await RootPage.GetDerpSQLiteDb().DropDerpTagTable();

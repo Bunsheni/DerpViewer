@@ -7,7 +7,9 @@
             <TableRoot>
                 <TableSection>
                     <EntryCell Label="API Key" Text="{Binding UserAPIKey}" Placeholder="Your API key" />
-                    <SwitchCell Text="Using Filter" On="{Binding UsingFilter}"/>
+                    <EntryCell Label="Tag Support Count" Text="{Binding TagCount}" Placeholder="Tag Support Count" />
+                    <SwitchCell Text="Using Filters" On="{Binding UsingFilter}"/>
+                    <SwitchCell Text="Hide Topbar" On="{Binding HideTopbar}"/>
                 </TableSection>
             </TableRoot>
         </TableView>

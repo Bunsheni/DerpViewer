@@ -11,14 +11,14 @@ namespace DerpViewer.Views
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class MainPage : MasterDetailPage
     {
-        private DerpSQLiteDb _derpSQLiteDb;
+        private DerpTagSQLiteDb _derpSQLiteDb;
         Dictionary<int, NavigationPage> MenuPages = new Dictionary<int, NavigationPage>();
 
         public MainPage()
         {
             InitializeComponent();
 
-            _derpSQLiteDb = new DerpSQLiteDb();
+            _derpSQLiteDb = new DerpTagSQLiteDb();
             MenuPages.Add((int)MenuItemType.ImageBrowser, (NavigationPage)Detail);
             MenuPages.Add((int)MenuItemType.TagBrowse, new NavigationPage(new DerpTagsPage()));
             MasterBehavior = MasterBehavior.Popover;
@@ -34,7 +34,7 @@ namespace DerpViewer.Views
             base.OnAppearing();
         }
 
-        public DerpSQLiteDb GetDerpSQLiteDb()
+        public DerpTagSQLiteDb GetDerpSQLiteDb()
         {
             return _derpSQLiteDb;
         }
