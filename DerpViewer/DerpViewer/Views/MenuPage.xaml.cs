@@ -1,7 +1,7 @@
 ﻿using DerpViewer.Models;
 using System;
 using System.Collections.Generic;
-
+using System.Threading.Tasks;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -18,8 +18,9 @@ namespace DerpViewer.Views
 
             menuItems = new List<HomeMenuItem>
             {
-                new HomeMenuItem {Id = MenuItemType.ImageBrowser, Title="Image" },
-                new HomeMenuItem {Id = MenuItemType.TagBrowse, Title="Tag" },
+                new HomeMenuItem {Id = MenuItemType.ImageBrowser, Title="Images" },
+                new HomeMenuItem {Id = MenuItemType.FavoriteBrowser, Title="Favorite" },
+                new HomeMenuItem {Id = MenuItemType.TagBrowse, Title="Tags" },
                 new HomeMenuItem {Id = MenuItemType.User, Title="User" },
                 new HomeMenuItem {Id = MenuItemType.About, Title="About" }
             };
@@ -35,6 +36,12 @@ namespace DerpViewer.Views
                 var id = (int)((HomeMenuItem)e.SelectedItem).Id;
                 await RootPage.NavigateFromMenu(id);
             };
+        }
+
+        public async Task MoveMenu(int id)
+        {
+            ListViewMenu.SelectedItem = menuItems[id];
+            await RootPage.NavigateFromMenu(id);
         }
     }
 }

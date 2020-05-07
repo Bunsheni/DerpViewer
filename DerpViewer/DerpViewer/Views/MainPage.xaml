@@ -4,7 +4,7 @@
             xmlns:views="clr-namespace:DerpViewer.Views"
             x:Class="DerpViewer.Views.MainPage">
     <MasterDetailPage.Master>
-        <views:MenuPage />
+        <views:MenuPage x:Name="MenuPageView" />
     </MasterDetailPage.Master>
     <MasterDetailPage.Detail>
         <NavigationPage>

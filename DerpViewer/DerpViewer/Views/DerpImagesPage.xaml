@@ -20,18 +20,29 @@
                 </OnPlatform>
             </ToolbarItem.Icon>
         </ToolbarItem>
+        <ToolbarItem x:Name="clearFilterItem" Text="ClearFilter" Clicked="ClearFilter_Clicked">
+            <ToolbarItem.Icon>
+                <OnPlatform x:TypeArguments="FileImageSource">
+                    <On Platform="UWP" Value="Icon\nonselected.png"/>
+                </OnPlatform>
+            </ToolbarItem.Icon>
+        </ToolbarItem>
 
-        <ToolbarItem Order="Secondary" Text="Sort" Clicked="Sort_Clicked"/>
-        <ToolbarItem Order="Secondary" Text="Link Copy" Clicked="LinkCopy_Clicked"/>
-        <ToolbarItem Order="Secondary" Text="Html Copy" Clicked="HtmlCopy_Clicked"/>
-        <ToolbarItem Order="Secondary" Text="View" Clicked="View_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="{Binding SortText}" Clicked="Sort_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="{Binding FolderDownloadText}" Clicked="FolderDownload_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="{Binding LinkCopyText}" Clicked="LinkCopy_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="{Binding HtmlCopyText}" Clicked="HtmlCopy_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="{Binding ViewText}" Clicked="View_Clicked"/>
+        <ToolbarItem x:Name="toolGetMyFavorite" Order="Secondary" IsEnabled="{Binding IsFavoriteView}" Text="{Binding GetMyFavoriteText}" Clicked="GetMyFavoriteItem_Clicked"/>
+        <ToolbarItem x:Name="toolGetMyFiles" Order="Secondary" IsEnabled="{Binding IsFavoriteView}" Text="{Binding GetMyFilesText}" Clicked="GetMyFilesItem_Clicked"/>
+        <!--<ToolbarItem x:Name="toolSearchMyFiles" Order="Secondary" IsEnabled="{Binding IsFavoriteView}" Text="{Binding SearchMyFilesText}" Clicked="ToolSearchMyFiles_Clicked"/>-->
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
         <StackLayout>
             <SearchBar x:Name="searchBar" Text="{Binding Key}" SearchButtonPressed="SearchBar_SearchButtonPressed" TextChanged="searchBar_TextChanged"/>
             <AbsoluteLayout x:Name="absLayout" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-                <ContentView AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="False">
-                    <local:CustomWebView x:Name="webView" HeightRequest="0" WidthRequest="0"/>
+                <ContentView AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="True">
+                    <local:CustomWebView x:Name="webView"/>
                 </ContentView>
                 <ContentView x:Name="searchView" AbsoluteLayout.LayoutBounds="0, 0, 1, 1" AbsoluteLayout.LayoutFlags="All" IsVisible="false">
                     <ListView x:Name="suggestionListView" BackgroundColor="White"
@@ -43,12 +54,12 @@
                               ItemTapped="suggestionListView_ItemTapped">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <TextCell Text="{Binding NameEn}"/>
+                                <TextCell Text="{Binding Text}" TextColor="{Binding CategoryColor}"/>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
                 </ContentView>
-                <ContentView x:Name="contentView" Padding="1" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="true">
+                <ContentView x:Name="contentView" Padding="1" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="false">
                     <StackLayout>
                         <FlexLayout x:Name="searchBox" Wrap="Wrap" FlowDirection="LeftToRight" ChildAdded="SearchBox_ChildAdded" ChildRemoved="SearchBox_ChildAdded"/>
                         <StackLayout x:Name="progressView" 
@@ -60,6 +71,7 @@
                         </StackLayout>
                         <ListView x:Name="listView" Margin="0" 
                                   ItemsSource="{Binding Images}"
+                                  IsRefreshing="{Binding ListViewIsRefreshing}"
                                   HasUnevenRows="true"
                                   SelectionMode="None"
                                   ItemAppearing="listView_ItemAppearing"
@@ -81,8 +93,29 @@
                                                     <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
                                                 </ffimageloading:CachedImage.GestureRecognizers>
                                             </ffimageloading:CachedImage>
+                                            <!--<WebView Source="{Binding ThumbUrl}" HorizontalOptions="Center" VerticalOptions="Center"
+                                                WidthRequest="120" HeightRequest="120"
+			                                    ClassId="{Binding Id}">
+                                            </WebView>-->
                                             <StackLayout HorizontalOptions="StartAndExpand">
-                                                <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start"/>
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start"/>
+                                                    <Label x:Name="Favorite" TextColor="DarkGoldenrod">
+                                                        <Label.Style>
+                                                            <Style TargetType="{x:Type Label}">
+                                                                <Setter Property="Text" Value="☆"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger TargetType="{x:Type Label}" Binding="{Binding IsFavorite}" Value="True">
+                                                                        <Setter Property="Text" Value="★"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Label.Style>
+                                                        <Label.GestureRecognizers>
+                                                            <TapGestureRecognizer Tapped="FavoriteTappedAsync"  NumberOfTapsRequired="1"/>
+                                                        </Label.GestureRecognizers>
+                                                    </Label>
+                                                </StackLayout>
                                                 <Label Text='{Binding Aritsts}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
                                                     <Label.GestureRecognizers>
                                                         <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
@@ -111,6 +144,7 @@
                         </ListView>
                         <ListView x:Name="listView2"
                                   ItemsSource="{Binding Images}"
+                                  IsRefreshing="{Binding ListViewIsRefreshing}"
                                   HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
                                   HasUnevenRows="true"
                                   SelectionMode="None"
@@ -128,6 +162,7 @@
                                                 HorizontalOptions="Center" VerticalOptions="Center"
                                                 Aspect="AspectFit"
 			                                    ClassId="{Binding Id}"
+                                                DownsampleToViewSize="True"
                                                 WidthRequest="{Binding StaticWidth}"
                                                 HeightRequest="{Binding StaticHeight}"
                                                 Source="{Binding FitSizeUrl}" LoadingPlaceholder="{Binding ThumbUrl}">
@@ -135,7 +170,77 @@
                                                     <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
                                                 </ffimageloading:CachedImage.GestureRecognizers>
                                             </ffimageloading:CachedImage>
-                                            <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start" Margin="0,0,0,5"/>
+                                            <StackLayout Orientation="Horizontal">
+                                                <Label Text="{Binding IdScoreCreatedAt}" LineBreakMode="TailTruncation" HorizontalOptions="Start" Margin="0,0,0,5"/>
+                                                <Label x:Name="Favorite" TextColor="DarkGoldenrod">
+                                                    <Label.Style>
+                                                        <Style TargetType="{x:Type Label}">
+                                                            <Setter Property="Text" Value="☆"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger TargetType="{x:Type Label}" Binding="{Binding IsFavorite}" Value="True">
+                                                                    <Setter Property="Text" Value="★"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Label.Style>
+                                                    <Label.GestureRecognizers>
+                                                        <TapGestureRecognizer Tapped="FavoriteTappedAsync"  NumberOfTapsRequired="1"/>
+                                                    </Label.GestureRecognizers>
+                                                </Label>
+                                            </StackLayout>
+                                            <Label Text='{Binding Aritsts}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                            <Label Text='{Binding Contents}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                            <Label Text='{Binding Characters}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                            <Label Text='{Binding Anothers}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start">
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="LabelTapped"  NumberOfTapsRequired="1"/>
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                        </StackLayout>
+                                    </ViewCell>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <ListView x:Name="listView3"
+                                  ItemsSource="{Binding Images}"
+                                  IsRefreshing="{Binding ListViewIsRefreshing}"
+                                  HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
+                                  HasUnevenRows="true"
+                                  SelectionMode="None"
+                                  ItemAppearing="listView_ItemAppearing"
+                                  ItemDisappearing="ListView_ItemDisappearing"
+                                  IsPullToRefreshEnabled="true"
+                                  ItemTapped="listView_ItemTapped"
+                                  SizeChanged="ListView_SizeChanged"
+                                  IsVisible="False">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <ViewCell>
+                                        <StackLayout HorizontalOptions="CenterAndExpand" BackgroundColor="{Binding BackgroundColor}">
+                                            <ffimageloading:CachedImage  
+                                                HorizontalOptions="Center" VerticalOptions="Center"
+                                                Aspect="AspectFit"
+			                                    ClassId="{Binding Id}"
+                                                DownsampleToViewSize="True"
+                                                WidthRequest="{Binding StaticWidth}"
+                                                HeightRequest="{Binding StaticHeight}"
+                                                Source="{Binding FitSizeUrl}" LoadingPlaceholder="{Binding ThumbUrl}">
+                                                <ffimageloading:CachedImage.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
+                                                </ffimageloading:CachedImage.GestureRecognizers>
+                                            </ffimageloading:CachedImage>
                                         </StackLayout>
                                     </ViewCell>
                                 </DataTemplate>
@@ -143,6 +248,24 @@
                         </ListView>
                     </StackLayout>
                 </ContentView>
+
+                <ContentView x:Name="overlay"
+                             AbsoluteLayout.LayoutBounds="0, 0, 1, 1" 
+                             AbsoluteLayout.LayoutFlags="All" 
+                             BackgroundColor="#C0808080"
+                             IsVisible="False"
+                             Padding="5, 0">
+
+                    <StackLayout Padding="5" BackgroundColor="White" HorizontalOptions="Center" VerticalOptions="Center">
+                        <Entry x:Name="foldernameentry" Placeholder="Folder name"/>
+
+                        <StackLayout Orientation="Horizontal">
+                            <Button Text="Cancel" Clicked="Button_Clicked"/>
+                            <Button Text="Done" Clicked="Button_Clicked_1" />
+                        </StackLayout>
+                    </StackLayout>
+                </ContentView>
+
             </AbsoluteLayout>
         </StackLayout>
     </ContentPage.Content>

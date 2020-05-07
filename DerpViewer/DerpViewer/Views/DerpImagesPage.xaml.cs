@@ -12,34 +12,55 @@ using FFImageLoading.Forms;
 using System.Collections.Generic;
 using FFImageLoading;
 using FFImageLoading.Cache;
+using System.Threading;
 
 namespace DerpViewer.Views
 {
     [XamlCompilation(XamlCompilationOptions.Compile)]
-    public partial class DerpImagesPage : ContentPage, IWebConnection
+    public partial class DerpImagesPage : ContentPage
     {
+        //뷰 모델
+        private DerpImagesViewModel viewModel;
+        // 더블 탭을 위한 탭 액션 지연시간
+        private TimeSpan _tt = new TimeSpan(5000000);
+        // 더블 탭을 위한 탭 카운트
+        private int _tabCount = 0;
+        //Sort 메뉴 스트립 문자열
+        private static readonly string[] sortbyen = new string[] { "Latest", "Oldest", "High Score", "Low Score" };
+        private static readonly string[] sortbykr = new string[] { "최신순", "오래된순", "높은 점수순", "낮은 점수순" };
+
+        private bool pageLock, viewMode;
+        private DerpSuggestionItem tabbedSuggestionItem;
+        private DerpImage tabbedImage;
+        private ImageSource tabbedImageSource;
+        private int _lastItemAppearedIdx;
+        private bool _lastItemLock;
+        private DerpImage selectedItem;
+        private Thread SuggestionThread, SearchThread;
+
         protected App RootApp { get => Application.Current as App; }
         protected MainPage RootPage { get => Application.Current.MainPage as MainPage; }
-        DerpImagesViewModel viewModel;
-        int _tabCount;
-        bool pageLock, viewMode;
-        string tabbedSuggestionItem;
-        DerpImage tabbedImage;
-        ImageSource tabbedImageSource;
+        public string[] SortByStrArray => RootApp.Korean ? sortbykr : sortbyen;
 
-        public DerpImagesPage()
+        public DerpImagesPage() : this(false)
+        {
+        }
+
+        public DerpImagesPage(bool favorite)
         {
             InitializeComponent();
-            BindingContext = viewModel = new DerpImagesViewModel(this as IWebConnection);
-            listView.RefreshCommand = new Command(async () =>
+            if (!favorite)
+            {
+                this.ToolbarItems.Remove(toolGetMyFavorite);
+                this.ToolbarItems.Remove(toolGetMyFiles);
+                //this.ToolbarItems.Remove(toolSearchMyFiles);
+            }
+
+            BindingContext = viewModel = new DerpImagesViewModel(favorite, webView);
+            listView3.RefreshCommand = listView2.RefreshCommand = listView.RefreshCommand = new Command(async () =>
             {
                 await viewModel.ExecuteLoadItemsCommand();
                 listView.IsRefreshing = false;
-            });
-            listView2.RefreshCommand = new Command(async () =>
-            {
-                await viewModel.ExecuteLoadItemsCommand();
-                listView2.IsRefreshing = false;
             });
             LockHideNavigationBar(5000000);
         }
@@ -48,21 +69,10 @@ namespace DerpViewer.Views
         {
             if (listView.ItemsSource == null)
             {
-                await RootPage.GetDerpSQLiteDb().GetTagsAsync();
+                await RootPage.GetDerpTagSQLiteDb().GetTagsAsync();
                 await viewModel.ExecuteLoadItemsCommand();
             }
             base.OnAppearing();
-        }
-
-
-        public async Task<string> TransWebBrowserInitAsync(string text, string from, string to)
-        {
-            return await webView.TransWebBrowserInitAsync(text, from, to);
-        }
-
-        public async Task<string> GetWebClintContentsAsync(string url)
-        {
-            return await webView.GetWebClintContentsAsync(url);
         }
 
         private void ImageTapGestureRecognizer_Tapped(object sender, EventArgs e)
@@ -78,11 +88,11 @@ namespace DerpViewer.Views
                 {
                     return;
                 }
-                TimeSpan tt = new TimeSpan(3000000);
-                Device.StartTimer(tt, TestHandleFuncAsync);
+                Device.StartTimer(_tt, TestHandleFuncAsync);
             }
             _tabCount++;
         }
+
         private bool TestHandleFuncAsync()
         {
             if (tabbedImage != null)
@@ -96,7 +106,7 @@ namespace DerpViewer.Views
                     if(tabbedImage.OriginalFormat == "webm")
                         Application.Current.MainPage.Navigation.PushModalAsync(new WebPage(tabbedImage.ImageUrl));
                     else
-                        Application.Current.MainPage.Navigation.PushModalAsync(new ImagePage(tabbedImage.ImageUrl, tabbedImageSource));
+                        Application.Current.MainPage.Navigation.PushModalAsync(new ImagePage(tabbedImage, tabbedImageSource));
                 }
                 tabbedImage = null;
                 _tabCount = 0;
@@ -108,7 +118,13 @@ namespace DerpViewer.Views
         {
             if (searchBar.Text.Trim().Length != 0 && searchBar.Text.Trim().Last() != ',')
             {
-                Task.Run(() => viewModel.GetSuggestionItem());
+                if(SuggestionThread != null && SuggestionThread.ThreadState == ThreadState.Running)
+                {
+                    viewModel.SuggestionLock = true;
+                    SuggestionThread.Join();
+                }
+                SuggestionThread = new Thread(new ThreadStart(viewModel.GetSuggestionItem));
+                SuggestionThread.Start();
                 searchView.IsVisible = true;
                 contentView.IsVisible = false;
             }
@@ -125,7 +141,7 @@ namespace DerpViewer.Views
             string temp = searchBar.Text.Trim();
             if (searchBar.Text.Trim().Length != 0 && !viewModel.ExistItem(temp))
             {
-                AddToSearchBox(temp, false);
+                AddToSearchBox(new DerpTag(temp), false);
             }
             contentView.IsVisible = true;
         }
@@ -152,9 +168,6 @@ namespace DerpViewer.Views
             SelectionChanged();
         }
 
-        int _lastItemAppearedIdx;
-        bool _lastItemLock;
-        DerpImage selectedItem;
 
         private void listView_ItemAppearing(object sender, ItemVisibilityEventArgs e)
         {
@@ -230,14 +243,13 @@ namespace DerpViewer.Views
             {
                 try
                 {
-                    tabbedSuggestionItem = ((DerpTag)e.Item).NameEn;
+                    tabbedSuggestionItem = ((DerpSuggestionItem)e.Item);
                 }
                 catch
                 {
                     return;
                 }
-                TimeSpan tt = new TimeSpan(5000000);
-                Device.StartTimer(tt, SuggestionHandleFuncAsync);
+                Device.StartTimer(_tt, SuggestionHandleFuncAsync);
             }
             _tabCount++;
         }
@@ -249,15 +261,17 @@ namespace DerpViewer.Views
                 string temp;
                 if (_tabCount > 1)
                 {
-                    temp = "-" + tabbedSuggestionItem;
+                    temp = "-" + tabbedSuggestionItem.Tag.Name;
+                    tabbedSuggestionItem.Tag.Sub = true;
                 }
                 else
                 {
-                    temp = tabbedSuggestionItem;
+                    temp = tabbedSuggestionItem.Tag.Name;
+                    tabbedSuggestionItem.Tag.Sub = false;
                 }
                 if (!viewModel.ExistItem(temp))
                 {
-                    AddToSearchBox(temp, false);
+                    AddToSearchBox(tabbedSuggestionItem.Tag, false);
                 }
             }
             searchView.IsVisible = false;
@@ -266,7 +280,7 @@ namespace DerpViewer.Views
             return false;
         }
 
-        public void AddToSearchBox(string item, bool clear)
+        public void AddToSearchBox(DerpTag item, bool clear)
         {
             DisplayNavigationBar();
             if (clear)
@@ -286,9 +300,9 @@ namespace DerpViewer.Views
             List<DerpTag> models = new List<DerpTag>();
             if (((Label)sender).Text != "unknown artist" && ((Label)sender).Text != "no content" && ((Label)sender).Text != "no character" && ((Label)sender).Text != "no tag")
             {
-                foreach (string str in Library.stringDivider(((Label)sender).Text, ", "))
+                foreach (string str in Library.StringDivider(((Label)sender).Text, ", "))
                 {
-                    DerpTag tag = await viewModel.DerpDb.GetTagFromNameAsync(str);
+                    DerpTag tag = await viewModel.DerpTagDb.GetTagFromNameAsync(str);
                     if (tag != null)
                         models.Add(tag);
                     else
@@ -302,12 +316,46 @@ namespace DerpViewer.Views
             pageLock = false;
         }
 
+        public async void UpdateListView()
+        {
+            await viewModel.ExecuteLoadItemsCommand();
+        }
+
+        public async Task Download(string folderName)
+        {
+            int count = 0;
+            await Task.Run(async () => {
+                count = await viewModel.Download(folderName);
+            });
+            if (0 <= count)
+                await DisplayAlert("알림", $"{count}개 이미지가 다운로드 완료되었습니다.", "확인");
+        }
+
+        private async void FavoriteTappedAsync(object sender, EventArgs e)
+        {
+            DerpImage img = ((Label)sender).BindingContext as DerpImage;
+            if(img.IsFavorite)
+            {
+                if (await DisplayAlert("알림", "내 목록에서 제거합니까?", "확인", "취소"))
+                {
+                    img.IsFavorite = !img.IsFavorite;
+                    await viewModel.DeleteFromMyImageListAsync(img);
+                }
+            }
+            else
+            {
+                img.IsFavorite = !img.IsFavorite;
+                await viewModel.AddToMyImageListAsync(img);
+            }
+            RootPage.FavoriteImageView.UpdateListView();
+        }
+
         public async void TagListDisplayAndSearch(List<DerpTag> models)
         {
             List<string> dis = new List<string>();
             foreach (DerpTag model in models)
             {
-                dis.Add(model.NameEn);
+                dis.Add(model.Name);
             }
             string select = await DisplayActionSheet(null, null, null, dis.ToArray());
             int selectedindex = dis.FindIndex(i => i == select);
@@ -315,28 +363,47 @@ namespace DerpViewer.Views
             DerpTag selectedModel = models[selectedindex];
             if (!viewModel.ExistItem(selectedModel.NameEn))
             {
-                AddToSearchBox(selectedModel.NameEn, false);
+                AddToSearchBox(selectedModel, false);
             }
         }
+
 
         private void SearchBox_ChildAdded(object sender, ElementEventArgs e)
         {
             SearchAction();
+        }
+
+        //viewModel이 검색을 수행하고
+        private async void SearchAction()
+        {
+            await viewModel.Search();
             SelectionChanged();
         }
 
-        private async void SearchAction()
+        private async void Download_Clicked(object sender, EventArgs e)
         {
-            listView.IsRefreshing = true;
-            listView2.IsRefreshing = true;
-            await viewModel.Search();
-            listView.IsRefreshing = false;
-            listView2.IsRefreshing = false;
+            await Download(string.Empty);
         }
 
-        private void Download_Clicked(object sender, EventArgs e)
+        private async void FolderDownload_Clicked(object sender, EventArgs e)
         {
-            Task.Run(() => viewModel.Download());
+            if (viewModel.Downloading)
+            {
+                await DisplayAlert("알림", "진행중인 다운로드가 완료된 후 시도하십시오.", "확인");
+            }
+            else
+            {
+                var imgs = viewModel.GetSelectedImages();
+                if (imgs.Count > 0)
+                {
+                    foldernameentry.Text = viewModel.CurrentKey;
+                    overlay.IsVisible = true;
+                }
+                else
+                {
+                    await DisplayAlert("알림", "다운로드할 이미지를 선택하십시오.", "확인");
+                }
+            }
         }
 
         private void ClearSelect_Clicked(object sender, EventArgs e)
@@ -344,13 +411,22 @@ namespace DerpViewer.Views
             viewModel.ClearSelect();
             SelectionChanged();
         }
+        private void ClearFilter_Clicked(object sender, EventArgs e)
+        {
+            if (searchBox.Children.Count > 0 || viewModel.Key.Length > 0)
+            {
+                viewModel.ClearFilterItem();
+                searchBox.Children.Clear();
+                //SearchAction();
+            }
+        }
 
         private async void Sort_Clicked(object sender, EventArgs e)
         {
-            string temp = await DisplayActionSheet("SortBy", "Cancle", null, DerpibooruService.sortbyen);
+            string temp = await DisplayActionSheet(viewModel.RootApp.Korean ? "정렬":"SortBy", viewModel.RootApp.Korean ? "취소" : "Cancle", null, SortByStrArray);
             if (temp != null)
             {
-                int tempint = DerpibooruService.sortbyen.ToList().FindIndex(i => string.Compare(i, temp) == 0);
+                int tempint = SortByStrArray.ToList().FindIndex(i => string.Compare(i, temp) == 0);
                 viewModel.Sort(tempint);
                 SearchAction();
             }
@@ -366,21 +442,86 @@ namespace DerpViewer.Views
             viewModel.HtmlCopy();
         }
                 
-        private void View_Clicked(object sender, EventArgs e)
+        private async void View_Clicked(object sender, EventArgs e)
         {
-            viewMode = !viewMode;
-            if (viewMode)
+            string temp = await DisplayActionSheet(viewModel.RootApp.Korean ? "보기" : "View", viewModel.RootApp.Korean ? "취소" : "Cancle", null, new string[] { "Small", "Large", "List"});
+            if (temp != null)
             {
-                listView.IsVisible = false;
-                listView2.IsVisible = true;
-                listView2.ScrollTo(selectedItem, ScrollToPosition.Start, false);
+                if (temp == "Small")
+                {
+                    listView.IsVisible = true;
+                    listView2.IsVisible = false;
+                    listView3.IsVisible = false;
+                    listView.ScrollTo(selectedItem, ScrollToPosition.Center, false);
+                }
+                else if (temp == "Large")
+                {
+                    listView.IsVisible = false;
+                    listView2.IsVisible = true;
+                    listView3.IsVisible = false;
+                    listView2.ScrollTo(selectedItem, ScrollToPosition.Center, false);
+                }
+                else if (temp == "List")
+                {
+                    listView.IsVisible = false;
+                    listView2.IsVisible = false;
+                    listView3.IsVisible = true;
+                    listView3.ScrollTo(selectedItem, ScrollToPosition.Center, false);
+                }
+            }
+        }
+
+        private async void GetMyFavoriteItem_Clicked(object sender, EventArgs e)
+        {
+            await viewModel.GetMyFavorite();
+            await DisplayAlert("알림", "완료되었습니다.", "확인");
+        }
+
+        private async void GetMyFilesItem_Clicked(object sender, EventArgs e)
+        {
+            await viewModel.GetMyFiles();
+            await DisplayAlert("알림", "완료되었습니다.", "확인");
+        }
+
+        private void Button_Clicked(object sender, EventArgs e)
+        {
+            overlay.IsVisible = false;
+        }
+
+        private async void Button_Clicked_1(object sender, EventArgs e)
+        {
+            if (foldernameentry.Text.Trim().Length == 0)
+            {
+                await DisplayAlert("알림", "폴더 이름은 공백일 수 없습니다.", "확인");
+            }
+            else if (foldernameentry.Text.Contains('\\')
+                || foldernameentry.Text.Contains('/') 
+                || foldernameentry.Text.Contains(':') 
+                || foldernameentry.Text.Contains('*')
+                || foldernameentry.Text.Contains('?')
+                || foldernameentry.Text.Contains('"')
+                || foldernameentry.Text.Contains('>')
+                || foldernameentry.Text.Contains('<')
+                || foldernameentry.Text.Contains('|'))
+            {
+                await DisplayAlert("알림", "폴더 이름에는 다음 문자를 사용할 수 없습니다. \\ / : * ? \" > < |", "확인");
             }
             else
             {
-                listView.IsVisible = true;
-                listView2.IsVisible = false;
-                listView.ScrollTo(selectedItem, ScrollToPosition.Start, false);
+                overlay.IsVisible = false;
+                string name = foldernameentry.Text;
+                await Download(name);
             }
+        }
+
+        private async void ToolSearchMyFiles_Clicked(object sender, EventArgs e)
+        {
+            webView.IsVisible = true;
+            contentView.IsVisible = false;
+            await viewModel.SearchMyFiles();
+            await DisplayAlert("알림", "완료되었습니다.", "확인");
+            //contentView.IsVisible = true;
+            //webView.IsVisible = false;
         }
 
         private void ListView_SizeChanged(object sender, EventArgs e)
@@ -389,26 +530,25 @@ namespace DerpViewer.Views
                 DerpImage.staticWidth = listView2.Width;
             else
                 DerpImage.staticWidth = listView.Width;
-
         }
     }
 
     class SearchBoxLabel : Label
     {
         static Thickness margin = new Thickness(5, 0);
-        string key;
+        DerpTag model;
         DerpImagesViewModel viewModel;
-        public SearchBoxLabel(string model, DerpImagesViewModel viewModel)
+        public SearchBoxLabel(DerpTag model, DerpImagesViewModel viewModel)
         {
             this.Margin = margin;
-            this.key = model;
+            this.model = model;
             this.viewModel = viewModel;
-            this.Text = model;
+            this.Text = (model.Sub ? "-":string.Empty) + model.Name;
             this.GestureRecognizers.Add(new TapGestureRecognizer()
             {
                 Command = new Command(() =>
                 {
-                    viewModel.RemoveFilterItem(key);
+                    viewModel.RemoveFilterItem(model);
                     ((FlexLayout)Parent).Children.Remove(this);
                 }),
                 NumberOfTapsRequired = 1

@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:DerpViewer.Views"
+             x:Class="DerpViewer.Views.DerpTagDetailPage">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Clear" Clicked="ClearItem_Clicked"/>
+        <ToolbarItem Text="Translate" Clicked="TranslateItem_Clicked"/>
+        <ToolbarItem Text="Save" Clicked="SaveItem_Clicked">
+            <ToolbarItem.Icon>
+                <OnPlatform x:TypeArguments="FileImageSource">
+                    <On Platform="UWP" Value="Icon\save.png"/>
+                </OnPlatform>
+            </ToolbarItem.Icon>
+        </ToolbarItem>
+    </ContentPage.ToolbarItems>
+    <ContentPage.Content>
+        <StackLayout x:Name="FieldBox">
+            <StackLayout>
+                <Button Text="{Binding Type}" Clicked="Button_Clicked"/>
+                <Entry Text="{Binding NameEn}" Placeholder="Name En"/>
+                <Entry Text="{Binding NameKr}" Placeholder="Name Kr"/>
+                <Entry Text="{Binding DescriptionEn}" Placeholder="Description En"/>
+                <Entry Text="{Binding DescriptionKr}" Placeholder="Description Kr"/>
+                <Entry Text="{Binding Synonym}" Placeholder="Synonym"/>
+            </StackLayout>
+            <local:CustomWebView x:Name="webView" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand"/>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

@@ -58,6 +58,18 @@ namespace DerpViewer.Views
             }
         }
 
+        public bool Korean
+        {
+            get
+            {
+                return RootApp.Korean;
+            }
+            set
+            {
+                RootApp.Korean = value;
+            }
+        }
+
         public UserPage ()
 		{
 			InitializeComponent ();

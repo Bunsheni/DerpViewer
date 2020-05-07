@@ -309,7 +309,7 @@ namespace DerpViewer
         }
 
         //문자열 분리
-        public static List<string> stringDivider(string strWithSlash, string divider)
+        public static List<string> StringDivider(string strWithSlash, string divider)
         {
             List<string> eachString = new List<string>();
             string temp;

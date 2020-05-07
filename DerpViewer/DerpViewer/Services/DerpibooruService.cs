@@ -11,6 +11,8 @@ using DerpViewer.Views;
 using Xamarin.Forms;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Collections.ObjectModel;
+using System.IO;
 
 namespace DerpViewer.Services
 {
@@ -18,12 +20,8 @@ namespace DerpViewer.Services
     enum DerpSortOrder { ASC, DESC }
     class DerpibooruService : INotifyPropertyChanged
     {
-
-
         private static readonly string[] sortbyfieldName = new string[]{ "created_at", "score"};
         private static readonly string[] sortbyorder = new string[] { "asc", "desc" };
-        public static readonly string[] sortbyen = new string[] { "Latest", "Oldest", "High Score", "Low Score" };
-        public static readonly string[] sortbykr = new string[] { "생성된 날짜", "점수" };
 
         float _progress;
         public float Progress
@@ -38,9 +36,7 @@ namespace DerpViewer.Services
                 OnPropertyChanged();
             }
         }
-
         bool progressBarIsVisible;
-        int progressBarHeight;
         public bool ProgressBarIsVisible
         {
             get
@@ -53,6 +49,7 @@ namespace DerpViewer.Services
                 OnPropertyChanged();
             }
         }
+        int progressBarHeight;
         public int ProgressBarHeight
         {
             get
@@ -65,9 +62,6 @@ namespace DerpViewer.Services
                 OnPropertyChanged();
             }
         }
-
-
-
         public static readonly int MinSearchLength = 5;
         private HttpClient _client = new HttpClient();
 
@@ -86,51 +80,85 @@ namespace DerpViewer.Services
         public DerpibooruService(IWebConnection web)
         {
             _web = web;
-        }
+        }     
 
-        public async Task<List<DerpImage>> GetLastedImage(string userkey, int index)
+        public async Task<List<DerpImage>> GetSearchImage(List<DerpImage> myList, List<CtFileItem> downloadedList, string userkey, string key, int index, DerpSortBy sf, DerpSortOrder sd)
         {
-            string orl = "https://derpibooru.org/images.json";
-            string url = $"{orl}?key={userkey}&perpage=50&page={index}";
+            string orl = "https://derpibooru.org/api/v1/json/";
+            string url = $"{orl}search/images?key={userkey}&per_page=50&q={key.Replace(' ', '+').ToLower()}&page={index}&sf={sortbyfieldName[(int)sf]}&sd={sortbyorder[(int)sd]}";
             var response = await _client.GetAsync(url);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
                 return null;
 
             var content = await response.Content.ReadAsStringAsync();
+            var imgs = JsonConvert.DeserializeObject<DerpList>(content).Images;
 
             List<DerpImage> res = new List<DerpImage>();
-            foreach (DerpImageCpt img in JsonConvert.DeserializeObject<DerpList>(content).Images)
+            foreach (DerpImageCpt img in imgs)
             {
-                res.Add(new DerpImage(img));
+                DerpImage myimg = new DerpImage(img);
+                if(myList.Exists(i => i.Id == img.Id))
+                {
+                    myimg.IsFavorite = true;
+                }
+                if (downloadedList.Exists(i => i.Name == img.Id || i.Name.StartsWith(img.Id + "__")))
+                {
+                    myimg.IsDownloaded = true;
+                }
+                res.Add(myimg);
             }
             return res;
         }
-                
-        public async Task<List<DerpImage>> GetSearchImage(string userkey, string key, int index, DerpSortBy sf, DerpSortOrder sd)
+
+        public async Task<List<DerpImage>> GetDerpFavoriteImages(string userkey)
         {
+            List<DerpImage> res = new List<DerpImage>();
             string orl = "https://derpibooru.org/search.json";
-            string url = $"{orl}?key={userkey}&perpage=50&q={key.Replace(' ', '+').ToLower()}&page={index}&sf={sortbyfieldName[(int)sf]}&sd={sortbyorder[(int)sd]}";
+            string url = $"{orl}?q=my:faves&key={userkey}";
             var response = await _client.GetAsync(url);
-
-            if (response.StatusCode == HttpStatusCode.NotFound)
-                return null;
-
-            var content = await response.Content.ReadAsStringAsync();
-
-            List<DerpImage> res = new List<DerpImage>();
-            foreach (DerpImageCpt img in JsonConvert.DeserializeObject<DerpList>(content).Search)
+            if (response.StatusCode != HttpStatusCode.NotFound)
             {
-                res.Add(new DerpImage(img));
+                var content = await response.Content.ReadAsStringAsync();
+                foreach (DerpImageCpt img in JsonConvert.DeserializeObject<DerpList>(content).Images)
+                {
+                    var myimg = new DerpImage(img);
+                    res.Add(myimg);
+                }
             }
             return res;
         }
 
-        protected MainPage RootPage { get => Application.Current.MainPage as MainPage; }
-        public List<DerpTag> GetTagInfoFromDerpibooru(List<DerpTag> oldTags, int max)
+        public async Task<DerpImage> GetDerpImage(string id)
         {
-            List<DerpTag> newTags = new List<DerpTag>();
+            string orl = "https://derpibooru.org/api/v1/json/";
+            string url = $"{orl}/images/:{id}";
+            var response = await _client.GetAsync(url);
+            if (response.StatusCode != HttpStatusCode.NotFound)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    var img = JsonConvert.DeserializeObject<DerpImageCpt>(content);
+                    if (img != null)
+                    {
+                        var derpimg = new DerpImage(img);
+                        return derpimg;
+                    }
+                }
+                catch
+                {
 
+                }
+            }
+            return null;
+        }
+
+        public List<DerpTag> GetTagInfoFromDerpibooru(List<DerpTag> oldTags, int max, IWebConnection _web, out int newcount)
+        {
+            newcount = 0;
+
+            List<DerpTag> newTags = new List<DerpTag>();
             using (WebClient webClient = new WebClient())
             {
                 int pageindex = 1;
@@ -161,33 +189,28 @@ namespace DerpViewer.Services
                                 tag.NameEn = tag.NameKr = System.Web.HttpUtility.HtmlDecode(tempstr2).Replace("&#39;", "'");
                                 tempstr2 = Library.extractionString(tempstr, "title=\"", "\"");
                                 tag.DescriptionEn = tag.DescriptionKr = System.Web.HttpUtility.HtmlDecode(tempstr2);
-                                //tag.DescriptionKr = await _web.TransWebBrowserInitAsync(tag.CategoryStrEn, "en", "ko");
                                 DerpTag temp = oldTags.Find(i => i.Id == tag.Id);
-                                if (temp == null)
+                                if (temp != null)
                                 {
-                                    newTags.Add(tag);
+                                    tag = temp;
                                 }
                                 else
                                 {
-                                    newTags.Add(tag);
-                                    oldTags.Remove(temp);
+                                    newcount++;
                                 }
+                                tag.Index = newTags.Count;
+                                newTags.Add(tag);
+
                                 Progress = (float)newTags.Count / max;
                                 if (newTags.Count >= max)
                                 {
-                                    foreach (DerpTag tag2 in oldTags)
-                                    {
-                                        tag2.NameEn = System.Web.HttpUtility.HtmlDecode(tag2.NameEn);
-                                    }
-                                    newTags.AddRange(oldTags);
-                                    return newTags;
+                                    goto EndPoint;
                                 }
                             }
                             catch (Exception ex)
                             {
-                                newTags.AddRange(oldTags);
                                 Console.WriteLine(ex);
-                                return newTags;
+                                goto EndPoint;
                             }
                         }
                     }
@@ -198,10 +221,46 @@ namespace DerpViewer.Services
                     pageindex++;
                 }
 
+            EndPoint:
+                for (int season = 9; season > 0; season--)
+                {
+                    int fin = season == 3 ? 13 : 26;
+                    var tags = new DerpTag($"spoiler:s{season.ToString("D2")}") { Category = DerpTagCategory.SPOILER, Index = newTags.Count };
+                    newTags.RemoveAll(i => i.NameEn == tags.NameEn);
+                    newTags.Add(tags);
+                    for (int episod = fin; episod > 0; episod--)
+                    {
+                        var tage = new DerpTag($"spoiler:s{season.ToString("D2")}e{episod.ToString("D2")}") { Category = DerpTagCategory.SPOILER, Index = newTags.Count };
+                        newTags.RemoveAll(i => i.NameEn == tage.NameEn);
+                        newTags.Add(tage);
+                    }
+                }
+                newTags.Add(new DerpTag("score.gt:100"));
+                newTags.Add(new DerpTag("score.gt:500"));
+                newTags.Add(new DerpTag("score.gt:1000"));
+                newTags.Add(new DerpTag("score.gte:100"));
+                newTags.Add(new DerpTag("score.gte:500"));
+                newTags.Add(new DerpTag("score.gte:1000"));
+                newTags.Add(new DerpTag("score.lt:100"));
+                newTags.Add(new DerpTag("score.lt:500"));
+                newTags.Add(new DerpTag("score.lt:1000"));
+                newTags.Add(new DerpTag("score.lte:100"));
+                newTags.Add(new DerpTag("score.lte:500"));
+                newTags.Add(new DerpTag("score.lte:1000"));
+
+
+                var olds = oldTags.FindAll(i => newTags.Find(j => j.NameEn == i.NameEn) == null);
+                newTags.AddRange(olds);
+
                 ProgressBarHeight = 0;
                 ProgressBarIsVisible = false;
             }
             return newTags;
+        }
+
+        public async Task SearchImage(string base64)
+        {
+            await _web.SearchImage(base64);
         }
     }
 

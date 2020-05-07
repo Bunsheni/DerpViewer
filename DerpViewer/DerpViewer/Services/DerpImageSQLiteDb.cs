@@ -53,7 +53,7 @@ namespace DerpViewer.Services
             try
             {
                 await GetConnection().CreateTableAsync<DerpImage>();
-                await GetConnection().CreateTableAsync<ImageArray>();
+                //await GetConnection().CreateTableAsync<ImageArray>();
             }
             catch (Exception ex)
             {
@@ -67,7 +67,7 @@ namespace DerpViewer.Services
         }
 
         private List<DerpImage> _derpImages;
-        private List<ImageArray> _imageArray;
+        //private List<ImageArray> _imageArray;
         public async Task Load()
         {
             IsLoaded = true;
@@ -75,12 +75,13 @@ namespace DerpViewer.Services
 
             await CreatDerpImageInfoTable();
             _derpImages = (await GetConnection().Table<DerpImage>().ToListAsync()).ToList();
-            _waitforListComplete.Set();
 
             if (_derpImages == null)
             {
                 IsLoaded = false;
             }
+
+            _waitforListComplete.Set();
         }
 
         public async Task<List<DerpImage>> GetDerpImagesAsync()
@@ -113,17 +114,16 @@ namespace DerpViewer.Services
 
         public async Task InsertDerpImageAsync(DerpImage image)
         {
-            _derpImage = (await GetConnection().Table<DerpImage>().ToListAsync()).ToList();
-            _derpImage.Add(image);
-            await DeleteDerpImageAsync(image.Id);
+            if (image == null) return;
+            (await GetDerpImagesAsync()).Add(image);
+            await DeleteDerpImageAsync(image);
             await GetConnection().InsertAsync(image);
         }
-
-        public async Task DeleteDerpImageAsync(string workid)
+        
+        public async Task DeleteDerpImageAsync(DerpImage image)
         {
-            DerpImage image = await GetConnection().Table<DerpImage>().Where(i => i.Id == workid).FirstOrDefaultAsync();
-            if (image != null)
-                await GetConnection().DeleteAsync(image);
+            if (image == null) return;
+            await GetConnection().DeleteAsync(image);
         }
 
         public async Task DeleteImageArrayAsync(string workid)

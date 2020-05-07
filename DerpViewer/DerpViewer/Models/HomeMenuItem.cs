@@ -7,6 +7,7 @@ namespace DerpViewer.Models
     public enum MenuItemType
     {
         ImageBrowser,
+        FavoriteBrowser,
         TagBrowse,
         User,
         About

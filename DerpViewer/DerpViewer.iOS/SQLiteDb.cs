@@ -4,6 +4,8 @@ using SQLite;
 using Xamarin.Forms;
 using DerpViewer.iOS;
 using System.Threading.Tasks;
+using DerpViewer.Services;
+using System.Collections.Generic;
 
 [assembly: Dependency(typeof(SQLiteDb))]
 namespace DerpViewer.iOS
@@ -35,6 +37,16 @@ namespace DerpViewer.iOS
         {
             string dir = Path.Combine(directory.FullName, fileName);
             return File.OpenWrite(dir);
+        }
+
+        public Task<List<CtFileItem>> GetSubList(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Stream> GetReadFileStream(string fileName)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -11,32 +11,46 @@ namespace DerpViewer.Views
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class MainPage : MasterDetailPage
     {
-        private DerpTagSQLiteDb _derpSQLiteDb;
-        Dictionary<int, NavigationPage> MenuPages = new Dictionary<int, NavigationPage>();
+        private DerpTagSQLiteDb _derpTagSQLiteDb;
+        private DerpImageSQLiteDb _derpImageSQLiteDb;
+        public Dictionary<int, NavigationPage> MenuPages = new Dictionary<int, NavigationPage>();
+        public DerpImagesPage MainImageView => MenuPages[(int)MenuItemType.ImageBrowser].RootPage as DerpImagesPage;
+        public DerpImagesPage FavoriteImageView => MenuPages[(int)MenuItemType.FavoriteBrowser].RootPage as DerpImagesPage;
 
         public MainPage()
         {
             InitializeComponent();
-
-            _derpSQLiteDb = new DerpTagSQLiteDb();
+            _derpTagSQLiteDb = new DerpTagSQLiteDb();
+            _derpImageSQLiteDb = new DerpImageSQLiteDb();
             MenuPages.Add((int)MenuItemType.ImageBrowser, (NavigationPage)Detail);
+            MenuPages.Add((int)MenuItemType.FavoriteBrowser, new NavigationPage(new DerpImagesPage(true)));
             MenuPages.Add((int)MenuItemType.TagBrowse, new NavigationPage(new DerpTagsPage()));
             MasterBehavior = MasterBehavior.Popover;
         }
 
         protected async override void OnAppearing()
         {
-            if (!_derpSQLiteDb.IsLoaded)
+            if (!_derpTagSQLiteDb.IsLoaded)
             {
-                await _derpSQLiteDb.Load();
-                DerpImageCpt.ContentTags = (await _derpSQLiteDb.GetTagsAsync());
+                await _derpTagSQLiteDb.Load();
+                DerpImage.ContentTags = (await _derpTagSQLiteDb.GetTagsAsync());                
             }
             base.OnAppearing();
         }
 
-        public DerpTagSQLiteDb GetDerpSQLiteDb()
+        public DerpTagSQLiteDb GetDerpTagSQLiteDb()
         {
-            return _derpSQLiteDb;
+            return _derpTagSQLiteDb;
+        }
+
+        public DerpImageSQLiteDb GetDerpImageSQLiteDb()
+        {
+            return _derpImageSQLiteDb;
+        }
+
+        public async Task MoveMenu(int id)
+        {
+            await MenuPageView.MoveMenu(id);
         }
 
         public async Task NavigateFromMenu(int id)
@@ -46,6 +60,9 @@ namespace DerpViewer.Views
                 switch (id)
                 {
                     case (int)MenuItemType.ImageBrowser:
+                        MenuPages.Add(id, new NavigationPage(new DerpImagesPage()));
+                        break;
+                    case (int)MenuItemType.FavoriteBrowser:
                         MenuPages.Add(id, new NavigationPage(new DerpImagesPage()));
                         break;
                     case (int)MenuItemType.TagBrowse:

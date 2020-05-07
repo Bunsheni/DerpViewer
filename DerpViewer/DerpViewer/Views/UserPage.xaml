@@ -10,6 +10,7 @@
                     <EntryCell Label="Tag Support Count" Text="{Binding TagCount}" Placeholder="Tag Support Count" />
                     <SwitchCell Text="Using Filters" On="{Binding UsingFilter}"/>
                     <SwitchCell Text="Hide Topbar" On="{Binding HideTopbar}"/>
+                    <SwitchCell Text="한국어" On="{Binding Korean}"/>
                 </TableSection>
             </TableRoot>
         </TableView>

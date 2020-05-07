@@ -7,6 +7,8 @@ using System.Reflection;
 using Java.IO;
 using System.IO;
 using System.Threading.Tasks;
+using DerpViewer.Services;
+using System.Collections.Generic;
 
 [assembly: Dependency(typeof(SQLiteDb))]
 
@@ -14,12 +16,12 @@ namespace DerpViewer.Droid
 {
     public class SQLiteDb : ISQLiteDb, IMedia
     {
-        DirectoryInfo directory;
-
         public SQLiteAsyncConnection GetConnection(string name)
         {
-            Directory.CreateDirectory(GetDocumentsPath());
-            var path = Path.Combine(GetDocumentsPath(), name);
+            var dir = GetDocumentsPath();
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, name);
+            CopyDatabaseIfNotExists(path);
             return new SQLiteAsyncConnection(path);
 
         }
@@ -27,19 +29,25 @@ namespace DerpViewer.Droid
         public string GetDocumentsPath()
         {
             var documentsPath = Android.OS.Environment.ExternalStorageDirectory.AbsolutePath;
-            var path = System.IO.Path.Combine(documentsPath, "DerpViewer");
+            var path = Path.Combine(documentsPath, "DerpViewer");
             return path;
         }
 
         public async Task<string> CreateDirectory(string folderName)
         {
-            directory = Directory.CreateDirectory(GetDocumentsPath());
+            var directory = Directory.CreateDirectory(Path.Combine(GetDocumentsPath(), folderName));
             return directory.FullName;
+        }
+
+        public async Task<Stream> GetReadFileStream(string fileName)
+        {
+            string dir = Path.Combine(GetDocumentsPath(), fileName);
+            return System.IO.File.OpenRead(dir);
         }
 
         public async Task<Stream> GetNewFileStream(string fileName)
         {
-            string dir = Path.Combine(directory.FullName, fileName);
+            string dir = Path.Combine(GetDocumentsPath(), fileName);
             return System.IO.File.OpenWrite(dir);
         }
 
@@ -69,6 +77,36 @@ namespace DerpViewer.Droid
                     }
                 }
             }
+        }
+
+        public async Task<List<CtFileItem>> GetSubList(string name)
+        {
+            DirectoryInfo folder = new DirectoryInfo(Path.Combine(GetDocumentsPath(), name.Replace("\\", "/")));
+            if (folder != null)
+            {
+                List<CtFileItem> items = new List<CtFileItem>();
+                foreach (DirectoryInfo item in folder.GetDirectories())
+                {
+                    CtFileItem fitem = new CtFileItem();
+                    fitem.Name = item.Name;
+                    fitem.FullName = item.FullName;
+                    fitem.CreationTime = item.CreationTime;
+                    fitem.IsDirectory = true;
+                    items.Add(fitem);
+                }
+                foreach (FileInfo item in folder.GetFiles())
+                {
+                    CtFileItem fitem = new CtFileItem();
+                    fitem.Name = item.Name;
+                    fitem.FullName = item.FullName;
+                    fitem.CreationTime = item.CreationTime;
+                    fitem.Length = item.Length;
+                    fitem.IsDirectory = false;
+                    items.Add(fitem);
+                }
+                return items;
+            }
+            return null;
         }
 
         public class ExternalSdStorageHelper

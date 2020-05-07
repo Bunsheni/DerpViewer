@@ -4,7 +4,21 @@
              xmlns:local="clr-namespace:DerpViewer.Views"
              x:Class="DerpViewer.Views.DerpTagsPage">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Update" Clicked="TagUpdate_Clicked">
+        <ToolbarItem Text="Replace" Clicked="ReplaceItem_Clicked">
+            <ToolbarItem.Icon>
+                <OnPlatform x:TypeArguments="FileImageSource">
+                    <On Platform="UWP" Value="Icon\refresh.png"/>
+                </OnPlatform>
+            </ToolbarItem.Icon>
+        </ToolbarItem>
+        <ToolbarItem Order="Secondary" Text="Update" Clicked="TagUpdate_Clicked">
+            <ToolbarItem.Icon>
+                <OnPlatform x:TypeArguments="FileImageSource">
+                    <On Platform="UWP" Value="Icon\refresh.png"/>
+                </OnPlatform>
+            </ToolbarItem.Icon>
+        </ToolbarItem>
+        <ToolbarItem Order="Secondary" Text="Translate" Clicked="TagTranslate_Clicked">
             <ToolbarItem.Icon>
                 <OnPlatform x:TypeArguments="FileImageSource">
                     <On Platform="UWP" Value="Icon\refresh.png"/>
@@ -15,7 +29,7 @@
     <ContentPage.Content>
         <AbsoluteLayout x:Name="abslayout" Padding="0" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
             <ContentView x:Name="buttonView" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All">
-                <local:CustomWebView x:Name="webView" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"/>
+                <local:CustomWebView x:Name="webView" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" IsVisible="False"/>
             </ContentView>
             <ContentView x:Name="popupListView" AbsoluteLayout.LayoutBounds="0, 0, 1, 1" AbsoluteLayout.LayoutFlags="All">
                 <StackLayout>
@@ -23,17 +37,27 @@
                     <StackLayout x:Name="progressView" Margin="-3">
                         <ProgressBar x:Name="progressBar" Progress="{Binding Progress}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
                     </StackLayout>
+                    <StackLayout x:Name="replaceView" Orientation="Horizontal" IsVisible="False">
+                        <Entry x:Name="oldText" Placeholder="old" HorizontalOptions="FillAndExpand" TextChanged="OldText_TextChanged"/>
+                        <BoxView WidthRequest="10" HorizontalOptions="Center"/>
+                        <Entry x:Name="newText" Placeholder="new" HorizontalOptions="FillAndExpand"/>
+                        <BoxView WidthRequest="3" HorizontalOptions="Center"/>
+                        <Button Text="Apply" HorizontalOptions="End" Clicked="Apply_Clicked"/>
+                        <BoxView WidthRequest="3" HorizontalOptions="Center"/>
+                        <Button Text="Save" HorizontalOptions="End" Clicked="Save_Clicked"/>
+                    </StackLayout>
                     <ListView x:Name="listView"
                               ItemsSource="{Binding Tags}"
-                              ItemTapped="Handle_ItemTapped"
                               HasUnevenRows="True"
+                              ItemTapped="ListView_ItemTapped"
                               CachingStrategy="RecycleElement">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <ViewCell>
-                                    <StackLayout>
+                                    <StackLayout BackgroundColor="{Binding BackgroundColor}">
+                                        <Label Text="{Binding NameEn}"/>
                                         <Label Text="{Binding NameKr}"/>
-                                        <Label Text="{Binding CategoryStrEn}"/>
+                                        <Label Text="{Binding CategoryStr}"/>
                                         <Label Text="{Binding Description}"/>
                                     </StackLayout>
                                 </ViewCell>

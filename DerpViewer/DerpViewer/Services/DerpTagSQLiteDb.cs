@@ -106,12 +106,12 @@ namespace DerpViewer.Services
 
         public async Task<DerpTag> GetTagFromNameAsync(string workid)
         {
-            return (await GetTagsAsync()).Find(i => i.NameEn == workid);
+            return (await GetTagsAsync()).Find(i => i.NameEn == workid || i.NameKr == workid);
         }
 
         public async Task InsertTagAsync(DerpTag tag)
         {
-            await GetConnection().InsertAsync(tag);
+            await GetConnection().InsertOrReplaceAsync(tag);
             (await GetTagsAsync()).Insert(0, tag);
         }
 
@@ -132,9 +132,9 @@ namespace DerpViewer.Services
 
         public async Task DeleteTagAsync(string workid)
         {
-            DerpTag comic = _derpTags.Find(i => i.Id == workid);
-            await GetConnection().DeleteAsync(comic);
-            _derpTags.Remove(comic);
+            DerpTag tag = _derpTags.Find(i => i.Id == workid);
+            await GetConnection().DeleteAsync(tag);
+            _derpTags.Remove(tag);
         }
 
         public async Task UpdateTagAsync(DerpTag tag)
@@ -150,25 +150,28 @@ namespace DerpViewer.Services
             }
         }
 
-        public List<DerpTag> DerpTagSuggestion(string key)
+        public List<DerpSuggestionItem> DerpTagSuggestion(string key)
         {
-            if(_derpTags != null)
+            List<DerpSuggestionItem> items = new List<DerpSuggestionItem>();
+            if (_derpTags != null && key != null && key.Length > 0)
             {
-                List<DerpTag> res;
-                if(key.Length > 2)
+                List<DerpTag> models = _derpTags.FindAll(j => j.Contains(key));
+                if (models != null)
                 {
-                    res =_derpTags.FindAll(i => i.Contain(key) || i.Suggestion(key));
+                    foreach (var model in models)
+                    {
+                        foreach (string str in model.GetTags())
+                        {
+                            if (str.ToLower().Contains(key.ToLower()))
+                            {
+                                items.Add(new DerpSuggestionItem(str, model));
+                                break;
+                            }
+                        }
+                    }
                 }
-                else
-                {
-                    res = _derpTags.FindAll(i => i.Suggestion(key));
-                }
-                return res;
             }
-            else
-            {
-                return new List<DerpTag>();
-            }
+            return items;
         }
     }
 

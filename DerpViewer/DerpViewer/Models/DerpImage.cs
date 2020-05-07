@@ -13,14 +13,10 @@ using SQLite;
 
 namespace DerpViewer.Models
 {
-    class DerpList
+    public class DerpList
     {
         [JsonProperty("images")]
         public DerpImageCpt[] Images { get; set; }
-        [JsonProperty("top_scoring")]
-        public DerpImageCpt[] TopScoring { get; set; }
-        [JsonProperty("search")]
-        public DerpImageCpt[] Search { get; set; }
     }
     /*
     DuplicateReport is a duplicate image report.
@@ -89,300 +85,140 @@ namespace DerpViewer.Models
 
     public class DerpImageCpt
     {
-        public static List<DerpTag> ContentTags;
-
-        [JsonProperty("id")]
-        public string Id { get; set; }
-
-        [JsonProperty("created_at")]
-        public DateTime CreatedAt { get; set; }
-
-        [JsonProperty("updated_at")]
-        public DateTime UpdatedAt { get; set; }
-
-        [JsonProperty("duplicate_reports")]
-        public DuplicateReport[] DuplicateReport { get; set; }
-
-        [JsonProperty("first_seen_at")]
-        public DateTime FirstSeenAt { get; set; }
-
-        [JsonProperty("uploader_id")]
-        public string UploaderID { get; set; }
-
-        [JsonProperty("file_name")]
-        public string FileName { get; set; }
-
-        [JsonProperty("description")]
-        public string Description { get; set; }
-
-        [JsonProperty("uploader")]
-        public string Uploader { get; set; }
-
-        [JsonProperty("image")]
-        public string Image { get; set; }
-
-        [JsonProperty("score")]
-        public int Score { get; set; }
-
-        [JsonProperty("upvotes")]
-        public int Upvotes { get; set; }
-
-        [JsonProperty("downvotes")]
-        public int Downvotes { get; set; }
-
-        [JsonProperty("faves")]
-        public int Faves { get; set; }
-
-        [JsonProperty("comment_count")]
-        public int CommentCount { get; set; }
-
-        [JsonProperty("tags")]
-        public string Tags { get; set; }
-
-        [JsonProperty("tag_ids")]
-        public string[] TagIds { get; set; }
-
-        [JsonProperty("width")]
-        public int Width { get; set; }
-
-        [JsonProperty("height")]
-        public int Height { get; set; }
-
         [JsonProperty("aspect_ratio")]
         public float AspectRatio { get; set; }
-
-        [JsonProperty("original_format")]
-        public string OriginalFormat { get; set; }
-
+        [JsonProperty("comment_count")]
+        public int CommentCount { get; set; }
+        [JsonProperty("created_at")]
+        public DateTime CreatedAt { get; set; }
+        [JsonProperty("deletion_reason")]
+        public string DeletionReason { get; set; }
+        [JsonProperty("description")]
+        public string Description { get; set; }
+        [JsonProperty("downvotes")]
+        public int Downvotes { get; set; }
+        [JsonProperty("duplicate_of")]
+        public string DuplicateOf { get; set; }
+        [JsonProperty("faves")]
+        public int Faves { get; set; }
+        [JsonProperty("first_seen_at")]
+        public DateTime FirstSeenAt { get; set; }
+        [JsonProperty("format")]
+        public string Format { get; set; }
+        [JsonProperty("height")]
+        public int Height { get; set; }
+        [JsonProperty("hidden_from_users")]
+        public bool HiddonFromUsers { get; set; }
+        [JsonProperty("id")]
+        public string Id { get; set; }
+        [JsonProperty("intensities")]
+        public object Intensities { get; set; }
         [JsonProperty("mime_type")]
-        public string MimeType { get; set; }
-
-        [JsonProperty("sha512_hash")]
-        public string Sha512Hash { get; set; }
-
+        public string Mime_type { get; set; }
         [JsonProperty("orig_sha512_hash")]
         public string OrigSha512Hash { get; set; }
-
-        [JsonProperty("source_url")]
-        public string SourceURL { get; set; }
-
+        [JsonProperty("processed")]
+        public bool Processed { get; set; }
         [JsonProperty("representations")]
         public Representations Representations { get; set; }
-
-        [JsonProperty("is_rendered")]
-        public bool IsRendered { get; set; }
-
-        [JsonProperty("is_optimized")]
-        public bool IsOptimized { get; set; }
-
-        [JsonProperty("interactions")]
-        public string Interactions { get; set; }
+        [JsonProperty("score")]
+        public int Score { get; set; }
+        [JsonProperty("sha512_hash")]
+        public string Sha512Hash { get; set; }
+        [JsonProperty("source_url")]
+        public string SourceURL { get; set; }
+        [JsonProperty("spoilered")]
+        public bool Spoilered { get; set; }
+        [JsonProperty("tag_count")]
+        public int TagCount { get; set; }
+        [JsonProperty("tag_ids")]
+        public string[] TagIds { get; set; }
+        [JsonProperty("tags")]
+        public string[] Tags { get; set; }
+        [JsonProperty("thumbnails_generated")]
+        public bool ThumbnailsGenerated { get; set; }
+        [JsonProperty("updated_at")]
+        public DateTime UpdatedAt { get; set; }
+        [JsonProperty("uploader")]
+        public string Uploader { get; set; }
+        [JsonProperty("uploader_id")]
+        public string UploaderID { get; set; }
+        [JsonProperty("upvotes")]
+        public int Upvotes { get; set; }
+        [JsonProperty("view_url")]
+        public string ViewUrl { get; set; }
+        [JsonProperty("width")]
+        public int Width { get; set; }
+        [JsonProperty("wilson_score")]
+        public float WilsonScore { get; set; }
         
+        [JsonIgnore]
         public string ThumbTinyUrl
         {
             get
             {
-                if (OriginalFormat == "webm")
+                if (Format == "webm")
                     return string.Empty;
                 else
-                    return $"https:{Representations.ThumbTiny}";
+                    return Representations.ThumbTiny;
             }
         }
+
+        [JsonIgnore]
         public string ThumbUrl
         {
             get
             {
-                if (OriginalFormat == "webm")
-                    return string.Empty;
+                if (Format == "webm")
+                    return Representations.Thumb.Replace("webm","gif");
                 else
-                    return $"https:{Representations.ThumbSmall}";
+                    return Representations.ThumbSmall;
             }
         }
+
+        [JsonIgnore]
         public string ImageUrl
         {
             get
             {
-                return $"https:{Image}";
+                return ViewUrl;
             }
         }
+
+        [JsonIgnore]
         public string SmallUrl
         {
             get
             {
-                return $"https:{Representations.Small}";
+                return Representations.Small;
             }
         }
 
+        [JsonIgnore]
         public string MediumUrl
         {
             get
             {
-                return $"https:{Representations.Medium}";
+                return Representations.Medium;
             }
         }
 
+        [JsonIgnore]
         public string LargeUrl
         {
             get
             {
-                return $"https:{Representations.Large}";
+                return Representations.Large;
             }
         }
 
+        [JsonIgnore]
         public string TallUrl
         {
             get
             {
-                return $"https:{Representations.Tall}";
+                return Representations.Tall;
             }
-        }
-
-        public string _artists;
-        public string Aritsts
-        {
-            get
-            {
-                if (_artists == null && ContentTags != null)
-                {
-                    GetContents();
-                }
-                return _artists ?? "no service";
-            }
-        }
-
-        public string _characters;
-        public string Characters
-        {
-            get
-            {
-                if(_characters == null && ContentTags != null)
-                {
-                    GetContents();
-                }
-                return _characters ?? "no service";
-            }
-        }
-
-        public string _contents;
-        public string Contents
-        {
-            get
-            {
-                if (_contents == null && ContentTags != null)
-                {
-                    GetContents();
-                }
-                return _contents ?? "no service";
-            }
-        }
-
-        public string _anothers;
-        public string Anothers
-        {
-            get
-            {
-                if (_anothers == null && ContentTags != null)
-                {
-                    GetContents();
-                }
-                return _anothers ?? "no service";
-            }
-        }
-
-        public string IdScoreCreatedAt
-        {
-            get
-            {
-                return $"{Id} {Score} {CreatedAt}";
-            }
-        }
-
-        public void GetContents()
-        {
-            List<string> tagstr = Library.stringDivider(Tags, ", ");
-            _artists = _characters = _anothers = _contents = string.Empty;
-            try
-            {
-
-                for (int i = 0; i < tagstr.Count; i++)
-                {
-                    DerpTag tag = ContentTags.Find(item => item.NameEn == tagstr[i]);
-                    if (tag != null && tag.Category == DerpTagCategory.RATING)
-                    {
-                        if (_anothers.Length == 0)
-                            _anothers = tag.NameEn;
-                        else
-                            _anothers += ", " + tag.NameEn;
-                    }
-                    else if (tagstr[i].StartsWith("artist:") || tagstr[i].StartsWith("editor:"))
-                    {
-                        if (_artists.Length == 0)
-                            _artists = tagstr[i];
-                        else
-                            _artists += ", " + tagstr[i];
-                    }
-                    else if (tagstr[i].StartsWith("spoiler:"))
-                    {
-                        if (_contents.Length == 0)
-                            _contents = tagstr[i];
-                        else
-                            _contents += ", " + tagstr[i];
-                    }
-                    else if (tagstr[i] == "oc" || tagstr[i] == "oc only")
-                    {
-                        if (_characters.Length == 0)
-                            _characters = tagstr[i];
-                        else
-                            _characters += ", " + tagstr[i];
-                    }
-                }
-                for (int i = 0; i < tagstr.Count; i++)
-                {
-                    DerpTag tag = ContentTags.Find(item => item.NameEn == tagstr[i]);
-
-                    if (tag != null && tag.Category == DerpTagCategory.RATING)
-                    {
-                    }
-                    else if (tagstr[i].StartsWith("artist:") || tagstr[i].StartsWith("editor:") || tagstr[i].StartsWith("spoiler:") || tagstr[i] == "oc" || tagstr[i] == "oc only")
-                    {
-                    }
-                    else if (tag != null && tag.Category == DerpTagCategory.ORIGIN)
-                    {
-                        if (_artists.Length == 0)
-                            _artists = tag.NameEn;
-                        else
-                            _artists += ", " + tag.NameEn;
-                    }
-                    else if (tag != null && (tag.Category == DerpTagCategory.CONTENTOFFICIAL || tag.Category == DerpTagCategory.CONTENTFANMADE))
-                    {
-                        if (_contents.Length == 0)
-                            _contents = tag.NameEn;
-                        else
-                            _contents += ", " + tag.NameEn;
-                    }
-                    else if (tagstr[i].StartsWith("oc:") || (tag != null && (tag.Category == DerpTagCategory.OC || tag.Category == DerpTagCategory.CHARACTER)))
-                    {
-                        if (_characters.Length == 0)
-                            _characters = tagstr[i];
-                        else
-                            _characters += ", " + tagstr[i];
-                    }
-                    else
-                    {
-                        if (_anothers.Length == 0)
-                            _anothers = tagstr[i];
-                        else
-                            _anothers += ", " + tagstr[i];
-                    }
-                }
-
-            }
-            catch
-            { }
-            _artists = _artists.Length == 0 ? "unknown artist" : _artists;
-            _contents = _contents.Length == 0 ? "no content" : _contents;
-            _characters = _characters.Length == 0 ? "no character" : _characters;
-            _anothers = _anothers.Length == 0 ? "no tag" : _anothers;
         }
     }
 
@@ -404,20 +240,26 @@ namespace DerpViewer.Models
         public DerpImage(DerpImageCpt derp)
         {
             this.Id = derp.Id;
-            this.OriginalFormat = derp.OriginalFormat;
-            this.IdScoreCreatedAt = derp.IdScoreCreatedAt;
-            this.IdScoreCreatedAt = derp.IdScoreCreatedAt;
-            this.Image = derp.Image;
+            this.CreatedAt = derp.CreatedAt;
+            this.Score = derp.Score;
+            this.OriginalFormat = derp.Format;
+            this.Image = derp.ViewUrl;
             this.ThumbUrl = derp.ThumbUrl;
             this.SmallUrl = derp.SmallUrl;
             this.MediumUrl = derp.MediumUrl;
             this.LargeUrl = derp.LargeUrl;
             this.TallUrl = derp.TallUrl;
             this.ImageUrl = derp.ImageUrl;
-            this.Aritsts = derp.Aritsts;
-            this.Characters = derp.Characters;
-            this.Contents = derp.Contents;
-            this.Anothers = derp.Anothers;
+            this.RatingStr = derp.Tags.Single(i => DerpTag.RatingEnStr.ToList().Exists(j => j == i.Trim())).Trim();
+            this.Tags = string.Empty;
+            foreach (var tag in derp.Tags)
+            {
+                if (this.Tags.Length == 0)
+                    this.Tags = tag;
+                else
+                    this.Tags += ',' + tag;
+            }
+            this.Discription = derp.Description;
             this.AspectRatio = derp.AspectRatio;
             this.Width = derp.Width;
             this.Height = derp.Height;
@@ -430,7 +272,16 @@ namespace DerpViewer.Models
         public string Id { get; set; }
         public string OriginalFormat { get; set; }
         [Ignore]
-        public string IdScoreCreatedAt { get; set; }
+        public int Score { get; set; }
+        [Ignore]
+        public string IdScoreCreatedAt
+        {
+            get
+            {
+                return $"{Id} {Score} {CreatedAt}";
+            }
+        }
+        public DateTime CreatedAt { get; set; }
         public string Image { get; set; }
         public string ThumbUrl { get; set; }
         public string SmallUrl { get; set; }
@@ -438,13 +289,97 @@ namespace DerpViewer.Models
         public string LargeUrl { get; set; }
         public string TallUrl { get; set; }
         public string ImageUrl { get; set; }
-        public string Aritsts { get; set; }
-        public string Characters { get; set; }
-        public string Contents { get; set; }
-        public string Anothers { get; set; }
         public float AspectRatio { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+        public string Tags { get; set; }
+        public string Discription { get; set; }
+
+        public static List<DerpTag> ContentTags;
+
+        public string _artists;
+        [Ignore]
+        public string Aritsts
+        {
+            get
+            {
+                if (_artists == null && ContentTags != null)
+                {
+                    GetContents();
+                }
+                return _artists ?? "no service";
+            }
+        }
+
+        public string _characters;
+        [Ignore]
+        public string Characters
+        {
+            get
+            {
+                if (_characters == null && ContentTags != null)
+                {
+                    GetContents();
+                }
+                return _characters ?? "no service";
+            }
+        }
+
+        public string _contents;
+        [Ignore]
+        public string Contents
+        {
+            get
+            {
+                if (_contents == null && ContentTags != null)
+                {
+                    GetContents();
+                }
+                return _contents ?? "no service";
+            }
+        }
+
+        public string _anothers;
+        [Ignore]
+        public string Anothers
+        {
+            get
+            {
+                if (_anothers == null && ContentTags != null)
+                {
+                    GetContents();
+                }
+                return _anothers ?? "no service";
+            }
+        }
+        public DerpRating Rating
+        {
+            get; set;
+        }
+        public string RatingStr
+        {
+            get
+            {
+                return DerpTag.RatingEnStr[(int)Rating];
+            }
+            set
+            {
+                Rating = (DerpRating)DerpTag.RatingEnStr.ToList().IndexOf(value);
+            }
+        }
+        bool _isfavorite;
+        public bool IsFavorite
+        {
+            get
+            {
+                return _isfavorite;
+            }
+            set
+            {
+                _isfavorite = value;
+                OnPropertyChanged();
+            }
+        }
 
         [Ignore]
         public string FitSizeUrl
@@ -453,12 +388,12 @@ namespace DerpViewer.Models
             {
                 if (OriginalFormat == "gif")
                     return SmallUrl;
-                else if (AspectRatio < 0.5)
-                    return LargeUrl;
-                else if (AspectRatio < 0.3)
-                    return TallUrl;
-                else if (AspectRatio < 0.2)
+                else if (AspectRatio < 0.6)
                     return ImageUrl;
+                else if (AspectRatio < 0.8)
+                    return TallUrl;
+                else if (AspectRatio < 1)
+                    return LargeUrl;
                 else
                     return MediumUrl;
             }
@@ -509,7 +444,7 @@ namespace DerpViewer.Models
             }
         }
                
-        private bool _isselected;
+        private bool _isselected, _isdownloaded;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -529,12 +464,198 @@ namespace DerpViewer.Models
         }
 
         [Ignore]
+        public bool IsDownloaded
+        {
+            get
+            {
+                return _isdownloaded;
+            }
+            set
+            {
+                _isdownloaded = value;
+                OnPropertyChanged();
+                OnPropertyChanged("BackgroundColor");
+            }
+        }
+
+        [Ignore]
         public Color BackgroundColor
         {
             get
             {
-                return IsSelected ? Color.LightGray : Color.Transparent;
+                return IsSelected ? Color.LightGray : IsDownloaded ? Color.AliceBlue : Color.Transparent;
             }
+        }
+        public void GetContents()
+        {
+            var tagstr = Tags.Split(',');
+            List<DerpTag> tags = new List<DerpTag>();
+            List<string> tagstr2 = new List<string>();
+
+            _artists = _characters = _anothers = _contents = string.Empty;
+            try
+            {
+
+                for (int i = 0; i < tagstr.Length; i++)
+                {
+                    DerpTag tag = ContentTags.Find(item => item.NameEn == tagstr[i]);
+                    string name;
+                    if (tag != null)
+                        name = tag.Name;
+                    else
+                        name = tagstr[i];
+                    if (tag != null && tag.Category == DerpTagCategory.RATING)
+                    {
+                        if (_anothers.Length == 0)
+                            _anothers = name;
+                        else
+                            _anothers += ", " + name;
+                    }
+                    else if (tagstr[i] == "artist needed" || tagstr[i].StartsWith("artist:") || tagstr[i].StartsWith("editor:") || tagstr[i].StartsWith("commissioner:"))
+                    {
+                        if (_artists.Length == 0)
+                            _artists = name;
+                        else
+                            _artists += ", " + name;
+                    }
+                    else if (tagstr[i].StartsWith("spoiler:") || tagstr[i].StartsWith("comic:") || tagstr[i].StartsWith("fanfic:") || tagstr[i].StartsWith("game:") || tagstr[i].StartsWith("art pack:") || tagstr[i].StartsWith("series:"))
+                    {
+                        if (_contents.Length == 0)
+                            _contents = name;
+                        else
+                            _contents += ", " + name;
+                    }
+                    else if (tagstr[i] == "oc" || tagstr[i] == "oc only")
+                    {
+                        if (_characters.Length == 0)
+                            _characters = name;
+                        else
+                            _characters += ", " + name;
+                    }
+                    else if (tag != null && 
+                        (tag.Category == DerpTagCategory.ARTCATEGORY || 
+                        tag.Category == DerpTagCategory.CHARACTERFEATURE || 
+                        tag.Category == DerpTagCategory.RACE || 
+                        tag.Category == DerpTagCategory.POSE || 
+                        tag.Category == DerpTagCategory.BODYPART||
+                        tag.Category == DerpTagCategory.BEHAVIOR))
+                    {
+                        tags.Add(tag);
+                    }
+                    else
+                    {
+                        tagstr2.Add(tagstr[i]);
+                    }
+                }
+
+                foreach(var tag in tags.OrderBy(i => i.Category))
+                {
+                    if (_anothers.Length == 0)
+                        _anothers = tag.Name;
+                    else
+                        _anothers += ", " + tag.Name;
+                }
+
+                for (int i = 0; i < tagstr2.Count; i++)
+                {
+                    DerpTag tag = ContentTags.Find(item => item.NameEn == tagstr2[i]);
+                    string name;
+                    if (tag != null)
+                        name = tag.Name;
+                    else
+                        name = tagstr2[i];
+
+                    if (tag != null && tag.Category == DerpTagCategory.ORIGIN)
+                    {
+                        if (_artists.Length == 0)
+                            _artists = tag.Name;
+                        else
+                            _artists += ", " + tag.Name;
+                    }
+                    else if (tag != null && (tag.Category == DerpTagCategory.CONTENTOFFICIAL || tag.Category == DerpTagCategory.CONTENTFANMADE))
+                    {
+                        if (_contents.Length == 0)
+                            _contents = tag.Name;
+                        else
+                            _contents += ", " + tag.Name;
+                    }
+                    else if (tagstr2[i].StartsWith("oc:"))
+                    {
+                        if (_characters.Length == 0)
+                            _characters = tagstr2[i];
+                        else
+                            _characters += ", " + tagstr2[i];
+                    }
+                    else if (tag != null && (tag.Category == DerpTagCategory.OC || tag.Category == DerpTagCategory.CHARACTER))
+                    {
+                        if (_characters.Length == 0)
+                            _characters = tag.Name;
+                        else
+                            _characters += ", " + tag.Name;
+                    }
+                    else if (tag != null)
+                    {
+                        if (_anothers.Length == 0)
+                            _anothers = tag.Name;
+                        else
+                            _anothers += ", " + tag.Name;
+                    }
+                    else
+                    {
+                        string org = tagstr2[i];
+                        int acc = 0;
+                        string temp2;
+
+                        if (DerpTag.Korean)
+                        {
+                            while (true)
+                            {
+                                int space = org.IndexOf(' ', acc);
+                                if (space > 0 && space < org.Length - 1)
+                                {
+                                    string word1 = org.Substring(0, space);
+                                    string word2 = org.Substring(space + 1);
+
+                                    var tag1 = ContentTags.Find(item => item.NameEn == word1);
+                                    var tag2 = ContentTags.Find(item => item.NameEn == word2);
+
+                                    if (tag1 != null && tag2 != null)
+                                    {
+                                        temp2 = tag1.Name + ' ' + tag2.Name;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        acc = word1.Length + 1;
+                                    }
+                                }
+                                else
+                                {
+                                    temp2 = tagstr2[i];
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            temp2 = tagstr2[i];
+                        }
+
+
+                        if (_anothers.Length == 0)
+                            _anothers = temp2;
+                        else
+                            _anothers += ", " + temp2;
+                    }
+                }
+
+            }
+            catch
+            { }
+            _artists = _artists.Length == 0 ? "unknown artist" : _artists;
+            _contents = _contents.Length == 0 ? "no content" : _contents;
+            _characters = _characters.Length == 0 ? "no character" : _characters;
+            _anothers = _anothers.Length == 0 ? "no tag" : _anothers;
         }
 
         public void OnPropertyChanged([CallerMemberName] string propertyName = "")

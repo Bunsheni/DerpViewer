@@ -2,6 +2,7 @@
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using DerpViewer.Views;
+using DerpViewer.Models;
 
 [assembly: XamlCompilation(XamlCompilationOptions.Compile)]
 namespace DerpViewer
@@ -11,6 +12,7 @@ namespace DerpViewer
         private const string UserAPIKeyKey = "UserAPIKey";
         private const string UsingFilterKey = "UsingFilter";
         private const string HideTopbarKey = "HideTopbar";
+        private const string KoreanKey = "Korean";
         private const string TagCountKey = "TagCount";
 
         public string UserAPIKey
@@ -67,6 +69,23 @@ namespace DerpViewer
                 SavePropertiesAsync();
             }
         }
+        public bool Korean
+        {
+            get
+            {
+                if (Properties.ContainsKey(KoreanKey)
+                    && Properties[KoreanKey] != null)
+                    return (bool)Properties[KoreanKey];
+                else
+                    return false;
+            }
+            set
+            {
+                Properties[KoreanKey] = value;
+                DerpTag.Korean = value;
+                SavePropertiesAsync();
+            }
+        }
         public int TagCount
         {
             get
@@ -87,8 +106,7 @@ namespace DerpViewer
         public App()
         {
             InitializeComponent();
-
-
+            DerpTag.Korean = Korean;
             MainPage = new MainPage();
         }
 
@@ -100,7 +118,8 @@ namespace DerpViewer
         protected override void OnSleep()
         {
             // Handle when your app sleeps
-            ((MainPage)MainPage).GetDerpSQLiteDb().Close();
+            ((MainPage)MainPage).GetDerpTagSQLiteDb().Close();
+            ((MainPage)MainPage).GetDerpImageSQLiteDb().Close();
         }
 
         protected override void OnResume()

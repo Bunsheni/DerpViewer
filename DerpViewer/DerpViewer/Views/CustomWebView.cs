@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +9,7 @@ using Xamarin.Forms;
 
 namespace DerpViewer.Views
 {
-    public class CustomWebView : WebView
+    public class CustomWebView : WebView, IWebConnection
     {
         AutoResetEvent waitForNavComplete;
         public CustomWebView()
@@ -19,7 +21,7 @@ namespace DerpViewer.Views
         {
             waitForNavComplete.Set();
         }
-        private async Task WaitAsync()
+        public async Task WaitAsync()
         {
             await Task.Run(() => { waitForNavComplete.WaitOne(); });
             waitForNavComplete.Reset();
@@ -49,12 +51,7 @@ namespace DerpViewer.Views
             try
             {
                 Source = "http://text-to-speech-translator.paralink.com/default.asp";
-                while(true)
-                {
-                    await WaitAsync();
-                    string temp = (await EvaluateJavaScriptAsync("document.documentElement.outerHTML;")).Replace("\\u003C", "<").Replace("\\\"", "\"").Replace("\\n", "\n");
-                    if (temp.Contains("target")) break;
-                }
+                await WaitAsync();
                 await EvaluateJavaScriptAsync(string.Format("document.getElementById(\"{0}\").value = \"{1}\"", "langs1", from));
                 await EvaluateJavaScriptAsync(string.Format("DDMENU(0)"));
                 await EvaluateJavaScriptAsync(string.Format("document.getElementById(\"{0}\").value = \"{1}\"", "langs2", to));
@@ -68,13 +65,43 @@ namespace DerpViewer.Views
             }
             catch
             {
-                Console.WriteLine("번역기 서버가 불안정합니다.", "알림");
+                Console.WriteLine("WebView Fail.", "Notice");
             }
             if (res.Length == 0)
                 res = text;
-
             return res;
         }
+
+
+        public async Task<string> SearchImage(string image)
+        {
+            Source = "https://derpibooru.org/search/reverse";
+            await WaitAsync();
+
+
+            await EvaluateJavaScriptAsync(string.Format("document.getElementById(\"{0}\").click()", "image"));
+
+            //var url = "https://derpicdn.net/img/view/2012/1/2/0.jpg";
+            //await EvaluateJavaScriptAsync(string.Format("document.getElementById(\"{0}\").value = \"{1}\"", "scraper_url", url));
+            //await EvaluateJavaScriptAsync(string.Format("document.getElementById(\"{0}\").click()", "js-scraper-preview"));
+            ////await WaitAsync();
+
+            //var d = await EvaluateJavaScriptAsync(string.Format("document.getElementById(\"{0}\")[0]", "js-image-upload-previews"));
+            //var s = await EvaluateJavaScriptAsync(string.Format("document.getElementsByClassName(\"{0}\")[0].getAttribute(\"src\")", "scraper-preview--image"));
+            //var a = string.Format("document.getElementsByClassName(\"{0}\")[0].setAttribute(\"src\", \"{1}\")", "scraper-preview--image", image);
+            //await EvaluateJavaScriptAsync(a);
+
+            //string a = string.Format("var image = document.createElement(\"img\"); image.src = \"{0}\"; document.getElementById(\"image\").files.appendChild(image);", path);
+
+            //a = "document.querySelector('[type=file]').files;";
+            //await EvaluateJavaScriptAsync(string.Format("document.getElementById(\"{0}\").click()", "image"));
+            //await WaitAsync();
+
+            await EvaluateJavaScriptAsync(string.Format("document.getElementsByName(\"{0}\")[0].click()", "commit"));
+            await WaitAsync();
+            return "";
+        }
+
     }
 
 

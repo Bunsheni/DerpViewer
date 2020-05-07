@@ -2,15 +2,41 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
 	         xmlns:ffimageloading="clr-namespace:FFImageLoading.Forms;assembly=FFImageLoading.Forms"
+             xmlns:local="clr-namespace:DerpViewer.Views"
              x:Class="DerpViewer.Views.ImagePage">
     <ContentPage.Content>
-        <!--<Image Source="{Binding ImageSource}"/>-->
-        <ContentView HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
-            <ContentView.GestureRecognizers>
-                <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped" NumberOfTapsRequired="2"/>
-            </ContentView.GestureRecognizers>
-            <ffimageloading:CachedImage x:Name="imageView">
-            </ffimageloading:CachedImage>
-        </ContentView>
+        <AbsoluteLayout x:Name="absLayout" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <Label x:Name="textView" LineBreakMode="WordWrap" IsVisible="False" TextColor="Black" Padding="5,0">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped" NumberOfTapsRequired="2"/>
+                    <SwipeGestureRecognizer Direction="Up" Swiped="SwipeGestureRecognizer_Swiped"/>
+                    <SwipeGestureRecognizer Direction="Down" Swiped="SwipeGestureRecognizer_Swiped"/>
+                </Label.GestureRecognizers>
+            </Label>
+            <ContentView x:Name ="normalView" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All">
+                <local:PinchToZoomContainer x:Name ="pinchView">
+                    <local:PinchToZoomContainer.Content>
+                        <ffimageloading:CachedImage  x:Name="imageView" Aspect="AspectFit" DownsampleUseDipUnits="True" DownsampleToViewSize="True">
+                            <ffimageloading:CachedImage.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped" NumberOfTapsRequired="2"/>
+                                <SwipeGestureRecognizer Direction="Up" Swiped="SwipeGestureRecognizer_Swiped"/>
+                                <SwipeGestureRecognizer Direction="Down" Swiped="SwipeGestureRecognizer_Swiped"/>
+                            </ffimageloading:CachedImage.GestureRecognizers>
+                        </ffimageloading:CachedImage>
+                    </local:PinchToZoomContainer.Content>
+                </local:PinchToZoomContainer>
+            </ContentView>
+            <ContentView x:Name ="imageScroll" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="False" SizeChanged="ImageScroll_SizeChanged">
+                <ScrollView>
+                    <StackLayout x:Name="imageStack" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+                        <ffimageloading:CachedImage x:Name="imageView2" Aspect="AspectFill">
+                            <ffimageloading:CachedImage.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped" NumberOfTapsRequired="2"/>
+                            </ffimageloading:CachedImage.GestureRecognizers>
+                        </ffimageloading:CachedImage>
+                    </StackLayout>
+                </ScrollView>
+            </ContentView>
+        </AbsoluteLayout>
     </ContentPage.Content>
 </ContentPage>
