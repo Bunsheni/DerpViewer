@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lc="clr-namespace:Xamarin.Forms.Labs.Controls;assembly=Xamarin.Forms.Labs"
+             xmlns:lb="clr-namespace:Xamarin.Forms.Labs.Behaviors;assembly=Xamarin.Forms.Labs" 
+             mc:Ignorable="d"
+             x:Class="DerpViewer.Views.FileBrowserPage">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Order="Secondary" Text="Image classification" Clicked="ClassifyMyImageFiles_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="Initialize image location" Clicked="InitializeFileLocation_Clicked"/>
+    </ContentPage.ToolbarItems>
+    <ContentPage.Content>
+        <ListView ItemsSource="{Binding FileList}" ItemSelected="ListView_ItemSelected">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextCell Text="{Binding Name}">
+                    </TextCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </ContentPage.Content>
+</ContentPage>

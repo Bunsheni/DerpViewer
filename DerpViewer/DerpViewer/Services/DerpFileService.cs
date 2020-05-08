@@ -7,10 +7,15 @@ using Xamarin.Forms;
 
 namespace DerpViewer.Services
 {
-    class DerpFileService
+    public class DerpFileService
     {
         public DerpFileService()
         {
+        }
+
+        public string GetBaseDirectory()
+        {
+            return DependencyService.Get<ISQLiteDb>().GetDocumentsPath();
         }
 
         public async Task<string> CreateDirectory(string name)
@@ -42,6 +47,7 @@ namespace DerpViewer.Services
             Name = "/";
         }
         public string Name { get; set; }
+        public string ShortName { get; set; }
         public string FullName { get; set; }
         public bool IsDirectory { get; set; }
         public long Length { get; set; }

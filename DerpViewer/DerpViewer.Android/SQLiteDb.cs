@@ -89,6 +89,7 @@ namespace DerpViewer.Droid
                 {
                     CtFileItem fitem = new CtFileItem();
                     fitem.Name = item.Name;
+                    fitem.ShortName = Path.Combine(name, item.Name);
                     fitem.FullName = item.FullName;
                     fitem.CreationTime = item.CreationTime;
                     fitem.IsDirectory = true;
@@ -98,6 +99,7 @@ namespace DerpViewer.Droid
                 {
                     CtFileItem fitem = new CtFileItem();
                     fitem.Name = item.Name;
+                    fitem.ShortName = Path.Combine(name, item.Name);
                     fitem.FullName = item.FullName;
                     fitem.CreationTime = item.CreationTime;
                     fitem.Length = item.Length;

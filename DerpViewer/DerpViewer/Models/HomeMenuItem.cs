@@ -8,7 +8,8 @@ namespace DerpViewer.Models
     {
         ImageBrowser,
         FavoriteBrowser,
-        TagBrowse,
+        TagBrowser,
+        FileBrowser,
         User,
         About
     }

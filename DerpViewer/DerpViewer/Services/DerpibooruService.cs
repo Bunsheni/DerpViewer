@@ -92,6 +92,7 @@ namespace DerpViewer.Services
                 return null;
 
             var content = await response.Content.ReadAsStringAsync();
+
             var imgs = JsonConvert.DeserializeObject<DerpList>(content).Images;
 
             List<DerpImage> res = new List<DerpImage>();
@@ -102,7 +103,7 @@ namespace DerpViewer.Services
                 {
                     myimg.IsFavorite = true;
                 }
-                if (downloadedList.Exists(i => i.Name == img.Id || i.Name.StartsWith(img.Id + "__")))
+                if (downloadedList != null && downloadedList.Exists(i => i.Name == img.Id || i.Name.StartsWith(img.Id + "__")))
                 {
                     myimg.IsDownloaded = true;
                 }

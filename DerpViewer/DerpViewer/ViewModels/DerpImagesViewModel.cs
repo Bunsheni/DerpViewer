@@ -233,18 +233,21 @@ namespace DerpViewer.ViewModels
                     await DerpImageDb.Load();
 
                 var mylist = await DerpImageDb.GetDerpImagesAsync();
-                var filelist = (await fileService.GetSubList("")).FindAll(i => i.Name.Contains("__"));
-
-                if (mylist != null)
+                var files = await fileService.GetSubList("");
+                List<CtFileItem> filelist = null;
+                if (files != null)
                 {
-                    mylist.Reverse();
-                    MyImages = new ObservableCollection<DerpImage>(mylist);
-                }
-
-                fileList.Clear();
-                if (filelist != null && filelist.Count > 0)
-                {
-                    fileList.AddRange(filelist);
+                    filelist = files.FindAll(i => i.Name.Contains("__"));
+                    if (mylist != null)
+                    {
+                        mylist.Reverse();
+                        MyImages = new ObservableCollection<DerpImage>(mylist);
+                    }
+                    fileList.Clear();
+                    if (filelist != null && filelist.Count > 0)
+                    {
+                        fileList.AddRange(filelist);
+                    }
                 }
 
                 var imgs = new ObservableCollection<DerpImage>();

@@ -20,7 +20,8 @@ namespace DerpViewer.Views
             {
                 new HomeMenuItem {Id = MenuItemType.ImageBrowser, Title="Images" },
                 new HomeMenuItem {Id = MenuItemType.FavoriteBrowser, Title="Favorite" },
-                new HomeMenuItem {Id = MenuItemType.TagBrowse, Title="Tags" },
+                new HomeMenuItem {Id = MenuItemType.TagBrowser, Title="Tags" },
+                new HomeMenuItem {Id = MenuItemType.FileBrowser, Title="Files" },
                 new HomeMenuItem {Id = MenuItemType.User, Title="User" },
                 new HomeMenuItem {Id = MenuItemType.About, Title="About" }
             };

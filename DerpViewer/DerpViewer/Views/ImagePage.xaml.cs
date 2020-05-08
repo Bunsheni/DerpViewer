@@ -18,6 +18,13 @@ namespace DerpViewer.Views
         private bool flag;
         private DerpImage image;
 
+        public ImagePage(ImageSource source)
+        {
+            InitializeComponent();
+            imageView.Source = source;
+            BindingContext = this;
+        }
+
         public ImagePage (DerpImage image, ImageSource loadingimage)
 		{
 			InitializeComponent ();
@@ -38,7 +45,7 @@ namespace DerpViewer.Views
 
         private async void TapGestureRecognizer_Tapped(object sender, EventArgs e)
         {
-            if (!flag)
+            if (!flag && image != null)
             {
                 flag = true;
                 //await Navigation.PopModalAsync();
@@ -78,15 +85,18 @@ namespace DerpViewer.Views
 
         private void ImageScroll_SizeChanged(object sender, EventArgs e)
         {
-            if (image.AspectRatio < 1)
+            if (image != null)
             {
-                DerpImage.staticWidth = imageScroll.Width;
-                DerpImage.staticHeight = 0;
-            }
-            else
-            {
-                DerpImage.staticHeight = imageScroll.Height;
-                DerpImage.staticWidth = 0;
+                if (image.AspectRatio < 1)
+                {
+                    DerpImage.staticWidth = imageScroll.Width;
+                    DerpImage.staticHeight = 0;
+                }
+                else
+                {
+                    DerpImage.staticHeight = imageScroll.Height;
+                    DerpImage.staticWidth = 0;
+                }
             }
         }
     }

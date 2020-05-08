@@ -16,6 +16,16 @@ namespace DerpViewer.Views
         public Dictionary<int, NavigationPage> MenuPages = new Dictionary<int, NavigationPage>();
         public DerpImagesPage MainImageView => MenuPages[(int)MenuItemType.ImageBrowser].RootPage as DerpImagesPage;
         public DerpImagesPage FavoriteImageView => MenuPages[(int)MenuItemType.FavoriteBrowser].RootPage as DerpImagesPage;
+        public Page CurrentPage
+        {
+            get
+            {
+                if (Detail.GetType() == typeof(NavigationPage))
+                    return ((NavigationPage)Detail).CurrentPage;
+                else
+                    return null;
+            }
+        }
 
         public MainPage()
         {
@@ -24,7 +34,8 @@ namespace DerpViewer.Views
             _derpImageSQLiteDb = new DerpImageSQLiteDb();
             MenuPages.Add((int)MenuItemType.ImageBrowser, (NavigationPage)Detail);
             MenuPages.Add((int)MenuItemType.FavoriteBrowser, new NavigationPage(new DerpImagesPage(true)));
-            MenuPages.Add((int)MenuItemType.TagBrowse, new NavigationPage(new DerpTagsPage()));
+            MenuPages.Add((int)MenuItemType.TagBrowser, new NavigationPage(new DerpTagsPage()));
+            MenuPages.Add((int)MenuItemType.FileBrowser, new NavigationPage(new FileBrowserPage()));
             MasterBehavior = MasterBehavior.Popover;
         }
 
@@ -63,10 +74,13 @@ namespace DerpViewer.Views
                         MenuPages.Add(id, new NavigationPage(new DerpImagesPage()));
                         break;
                     case (int)MenuItemType.FavoriteBrowser:
-                        MenuPages.Add(id, new NavigationPage(new DerpImagesPage()));
+                        MenuPages.Add(id, new NavigationPage(new DerpImagesPage(true)));
                         break;
-                    case (int)MenuItemType.TagBrowse:
+                    case (int)MenuItemType.TagBrowser:
                         MenuPages.Add(id, new NavigationPage(new DerpTagsPage()));
+                        break;
+                    case (int)MenuItemType.FileBrowser:
+                        MenuPages.Add(id, new NavigationPage(new FileBrowserPage()));
                         break;
                     case (int)MenuItemType.User:
                         MenuPages.Add(id, new NavigationPage(new UserPage()));
