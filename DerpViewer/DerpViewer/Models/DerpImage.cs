@@ -488,7 +488,7 @@ namespace DerpViewer.Models
         }
         public void GetContents()
         {
-            var tagstr = Tags.Split(',');
+            var tagstr = Tags.Replace(", ", ",").Split(',');
             List<DerpTag> tags = new List<DerpTag>();
             List<string> tagstr2 = new List<string>();
 

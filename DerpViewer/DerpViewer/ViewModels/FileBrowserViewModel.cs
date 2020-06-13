@@ -8,22 +8,128 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Xamarin.Forms;
 
 namespace DerpViewer.ViewModels
 {
     public class FileBrowserViewModel : BaseViewModel
     {
-        public string CurrentDirectory = string.Empty;
-
+        private string _key = string.Empty;
+        private bool progressBarIsVisible;
+        private List<DerpSuggestionItem> suggestionItem;
         private DerpFileService fileService = new DerpFileService();
         private ObservableCollection<CtFileItem> fileList = new ObservableCollection<CtFileItem>();
+
+        public bool ProgressBarIsVisible
+        {
+            get
+            {
+                return progressBarIsVisible;
+            }
+            set
+            {
+                progressBarIsVisible = value;
+                OnPropertyChanged();
+            }
+        }
+        int progressBarHeight;
+        public int ProgressBarHeight
+        {
+            get
+            {
+                return progressBarHeight;
+            }
+            set
+            {
+                progressBarHeight = value;
+                OnPropertyChanged();
+            }
+        }
+        float progress1, progress2;
+        public float Progress1
+        {
+            get
+            {
+                return progress1;
+            }
+            set
+            {
+                progress1 = value;
+                OnPropertyChanged();
+            }
+        }
+        public float Progress2
+        {
+            get
+            {
+                return progress2;
+            }
+            set
+            {
+                progress2 = value;
+                OnPropertyChanged();
+            }
+        }
+        public List<DerpSuggestionItem> SuggestionItems
+        {
+            get { return suggestionItem; }
+
+            set
+            {
+                suggestionItem = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string Key
+        {
+            get
+            {
+                return _key;
+            }
+            set
+            {
+                _key = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool SuggestionLock = false;
+        public void GetSuggestionItem()
+        {
+            try
+            {
+                string key;
+                int i = Key.LastIndexOf(',');
+                if (i < 0)
+                {
+                    key = Key;
+                }
+                else
+                {
+                    key = Key.Substring(i + 1);
+                }
+                var items = DerpTagDb.DerpTagSuggestion(key);
+                if (!SuggestionLock)
+                    SuggestionItems = items;
+                else
+                    SuggestionLock = false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
 
         public ObservableCollection<CtFileItem> FileList
         {
             get { return fileList; }
             set { SetProperty(ref fileList, value); }
         }
+
+        public string CurrentDirectory = string.Empty;
 
         public FileBrowserViewModel()
         {
@@ -66,6 +172,34 @@ namespace DerpViewer.ViewModels
             await DisplayFiles();
         }
 
+
+        public async Task<int> GetSubItemNumber(CtFileItem fileItem)
+        {
+            try
+            {
+                var subs = await fileService.GetSubList(fileItem.ShortName);
+                return subs.Count;
+            }
+            catch
+            {
+                return -1;
+            }
+        }
+
+        public bool DeleteFolder(CtFileItem fileItem)
+        {
+            try
+            {
+                if (Directory.Exists(fileItem.FullName))
+                    Directory.Delete(fileItem.FullName, true);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public bool ExistFile(CtFileItem fileItem)
         {
             var res = File.Exists(fileItem.FullName);
@@ -98,17 +232,31 @@ namespace DerpViewer.ViewModels
 
         public async Task DisplayFiles()
         {
-            List<CtFileItem> files = await fileService.GetSubList(CurrentDirectory.Trim('/').Replace("/", "\\"));
+            List<CtFileItem> files = await fileService.GetSubList(CurrentDirectory);
             foreach (CtFileItem item in files)
             {
                 FileList.Add(item);
             }
         }
 
+        public async Task RenameFolder(CtFileItem item, string newname)
+        {
+            string src = item.ShortName;
+            string dest = Path.Combine(CurrentDirectory, newname);
+            await fileService.MoveDirectory(src, dest);
+            await UpdateDirectory();
+        }
+
+        public async Task CreateFolder(string name)
+        {
+            await fileService.CreateDirectory(Path.Combine(CurrentDirectory, name));
+            await UpdateDirectory();
+        }
+
         public async Task ClassifyAll()
         {
-            await DirectoryImageClassify(string.Empty);
-            await MoveRootDirectory();
+            await DirectoryImageClassify(CurrentDirectory);
+            await UpdateDirectory();
         }
 
         public async Task DirectoryImageClassify(string directoryName)
@@ -117,6 +265,9 @@ namespace DerpViewer.ViewModels
             var items = await fileService.GetSubList(directoryName);
             var files = items.FindAll(i => !i.IsDirectory);
             var directories = items.FindAll(i => i.IsDirectory).OrderBy(j => j.Name.Length).ToArray();
+            var directoryOthers = directories.SingleOrDefault(i => i.Name == "others");
+
+            int index = 0, count = files.Count;
 
             foreach (var file in files)
             {
@@ -128,15 +279,18 @@ namespace DerpViewer.ViewModels
                     var str_tags = file.Name.Substring(i___ + 2, i_tagstrlen).Replace("+", " ").Replace("-colon-", "#");
                     var strl_tags = str_tags.Split('_').ToArray();
                     CtFileItem matchedDirectory = null;
+                    bool matchFlag = false;
                     foreach (var dir in directories)
                     {
-                        var strl_dirtags = dir.Name.Split(',');
+                        var strl_dirtags = dir.Name.Replace(", ", ",").Split(',');
+                        //var rest = strl_dirtags.Except(strl_tags).Any();
                         var rest = strl_tags.Any(i => strl_dirtags.Contains(i));
                         if (rest)
                         {
                             if (matchedDirectory == null)
                             {
                                 matchedDirectory = dir;
+                                matchFlag = true;
                             }
                             else
                             {
@@ -155,11 +309,10 @@ namespace DerpViewer.ViewModels
                             DependencyService.Get<IMedia>().UpdateGallery(dest);
                         }
                     }
-                    else if (directories.Length > 0)
+                    else if (!matchFlag && directoryOthers != null)
                     {
-                        var othersDirectoryName = await fileService.CreateDirectory(Path.Combine(directoryName, "others"));
                         var src = file.FullName;
-                        var dest = Path.Combine(othersDirectoryName, file.Name);
+                        var dest = Path.Combine(directoryOthers.FullName, file.Name);
                         if (File.Exists(src) && !File.Exists(dest))
                         {
                             File.Move(src, dest);
@@ -167,6 +320,7 @@ namespace DerpViewer.ViewModels
                         }
                     }
                 }
+                SetProgressBarValue(++index, count);
             }
             foreach (var dir in directories)
             {
@@ -174,43 +328,48 @@ namespace DerpViewer.ViewModels
             }
         }
 
-        public async Task Population()
+        public async Task<List<CtFileItem>> PopulationFiles(string directory)
         {
-            var items = await fileService.GetSubList(string.Empty);
-            var directories = items.FindAll(i => i.IsDirectory).OrderBy(j => j.Name.Length).ToArray();
-
-            var files = new List<CtFileItem>();
+            var items = await fileService.GetSubList(directory);
+            var directories = items.FindAll(i => i.IsDirectory);
+            var files = items.FindAll(i => !i.IsDirectory);
             foreach (var dir in directories)
             {
-                var tmp = await GetSubFiles(dir.ShortName);
+                var tmp = await PopulationFiles(dir.ShortName);
                 files.AddRange(tmp);
             }
-
-            foreach (var file in files)
-            {
-                var src = file.FullName;
-                var dest = Path.Combine(fileService.GetBaseDirectory(), file.Name);
-                if (File.Exists(src) && !File.Exists(dest))
-                {
-                    File.Move(src, dest);
-                    DependencyService.Get<IMedia>().UpdateGallery(dest);
-                }
-            }
+            return files;
         }
 
-        public async Task<CtFileItem[]> GetSubFiles(string directoryName)
+        public async Task PopulationAll()
         {
-            var items = await fileService.GetSubList(directoryName);
-            var files = items.FindAll(i => !i.IsDirectory);
-            var directories = items.FindAll(i => i.IsDirectory).OrderBy(j => j.Name.Length).ToArray();
-            var allfiles = new List<CtFileItem>(files);
-            
-            foreach(var dir in directories)
+            var files = await PopulationFiles(CurrentDirectory);
+            int index = 0, count = files.Count;
+            foreach (var file in files)
             {
-                var tmp = await GetSubFiles(dir.ShortName);
-                allfiles.AddRange(tmp);
+                var src = file.ShortName;
+                var dest = Path.Combine(CurrentDirectory, file.Name);
+                await fileService.MoveFile(src, dest);
+                DependencyService.Get<IMedia>().UpdateGallery(dest);
+                SetProgressBarValue(++index, count);
             }
-            return allfiles.ToArray();
+            await UpdateDirectory();
+        }
+
+        public void SetProgressBarValue(int value, int Max)
+        {
+            if (value < Max)
+            {
+                ProgressBarHeight = 8;
+                ProgressBarIsVisible = true;
+            }
+            else
+            {
+                value = Max;
+                ProgressBarIsVisible = false;
+                ProgressBarHeight = 0;
+            }
+            Progress2 = (float)value / Max;
         }
     }
 }

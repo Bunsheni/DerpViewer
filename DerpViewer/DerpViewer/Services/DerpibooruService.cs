@@ -84,30 +84,37 @@ namespace DerpViewer.Services
 
         public async Task<List<DerpImage>> GetSearchImage(List<DerpImage> myList, List<CtFileItem> downloadedList, string userkey, string key, int index, DerpSortBy sf, DerpSortOrder sd)
         {
-            string orl = "https://derpibooru.org/api/v1/json/";
-            string url = $"{orl}search/images?key={userkey}&per_page=50&q={key.Replace(' ', '+').ToLower()}&page={index}&sf={sortbyfieldName[(int)sf]}&sd={sortbyorder[(int)sd]}";
-            var response = await _client.GetAsync(url);
-
-            if (response.StatusCode == HttpStatusCode.NotFound)
-                return null;
-
-            var content = await response.Content.ReadAsStringAsync();
-
-            var imgs = JsonConvert.DeserializeObject<DerpList>(content).Images;
-
             List<DerpImage> res = new List<DerpImage>();
-            foreach (DerpImageCpt img in imgs)
+            try
             {
-                DerpImage myimg = new DerpImage(img);
-                if(myList.Exists(i => i.Id == img.Id))
+                string orl = "https://derpibooru.org/api/v1/json/";
+                string url = $"{orl}search/images?key={userkey}&per_page=50&q={key.Replace(' ', '+').ToLower()}&page={index}&sf={sortbyfieldName[(int)sf]}&sd={sortbyorder[(int)sd]}";
+                var response = await _client.GetAsync(url);
+
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                    return null;
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                var imgs = JsonConvert.DeserializeObject<DerpList>(content).Images;
+
+                foreach (DerpImageCpt img in imgs)
                 {
-                    myimg.IsFavorite = true;
+                    DerpImage myimg = new DerpImage(img);
+                    if (myList.Exists(i => i.Id == img.Id))
+                    {
+                        myimg.IsFavorite = true;
+                    }
+                    if (downloadedList != null && downloadedList.Exists(i => i.Name == img.Id || i.Name.StartsWith(img.Id + "__")))
+                    {
+                        myimg.IsDownloaded = true;
+                    }
+                    res.Add(myimg);
                 }
-                if (downloadedList != null && downloadedList.Exists(i => i.Name == img.Id || i.Name.StartsWith(img.Id + "__")))
-                {
-                    myimg.IsDownloaded = true;
-                }
-                res.Add(myimg);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
             return res;
         }

@@ -26,6 +26,7 @@ namespace DerpViewer.Views
         private DerpTagsViewModel viewModel;
         private DerpTag selectedTag;
         private bool _selectMode = false;
+        private bool favorite = false;
 
         private List<DerpTag> modifiedTags = new List<DerpTag>();
 
@@ -76,11 +77,11 @@ namespace DerpViewer.Views
                             keycharacters.Add(tempe);
                             keycharacters.Add(tempk);
                         }
-                        listView.ItemsSource = models.FindAll(i => keycharacters.Contains(i.NameEn) || keycharacters.Contains(i.NameKr));
+                        listView.ItemsSource = models.FindAll(i => (favorite ? i.IsFavorite : true) && (keycharacters.Contains(i.NameEn) || keycharacters.Contains(i.NameKr)));
                     }
                     else
                     {
-                        listView.ItemsSource = models.FindAll(i => i.NameKr.Contains(key) && (i.Category == DerpTagCategory.CHARACTER || i.Category == DerpTagCategory.NONE));
+                        listView.ItemsSource = models.FindAll(i => (favorite ? i.IsFavorite : true) && i.NameKr.Contains(key) && (i.Category == DerpTagCategory.CHARACTER || i.Category == DerpTagCategory.NONE));
                     }
                     foreach (DerpTag tag in DerpTags)
                     {
@@ -90,7 +91,7 @@ namespace DerpViewer.Views
                 }
                 else
                 {
-                    listView.ItemsSource = models.FindAll(i => i.Category == DerpTagCategory.CHARACTER || i.Category == DerpTagCategory.NONE);
+                    listView.ItemsSource = models.FindAll(i => (favorite ? i.IsFavorite : true) && i.Category == DerpTagCategory.CHARACTER || i.Category == DerpTagCategory.NONE);
                     foreach (DerpTag tag in DerpTags)
                     {
                         tag.IsSelected = false;
@@ -101,11 +102,11 @@ namespace DerpViewer.Views
             {
                 if (key.Length != 0)
                 {
-                    listView.ItemsSource = models.FindAll(i => i.NameEn.Contains(key) || i.NameKr.Contains(key) || i.CategoryStrKr == key || i.CategoryStrEn == key);
+                    listView.ItemsSource = models.FindAll(i => (favorite ? i.IsFavorite : true) && i.NameEn.Contains(key) || i.NameKr.Contains(key) || i.CategoryStrKr == key || i.CategoryStrEn == key);
                 }
                 else
                 {
-                    listView.ItemsSource = models;
+                    listView.ItemsSource = models.FindAll(i => (favorite ? i.IsFavorite : true));
                 }
                 foreach (DerpTag tag in DerpTags)
                 {
@@ -176,7 +177,8 @@ namespace DerpViewer.Views
             else if(!lockTap)
             {
                 lockTap = true;
-                string[] SortsEn = { "검색", "편집", "복사", "삭제" };
+                string fav = tag.IsFavorite ? "즐겨찾기 제거" : "즐겨찾기 추가";
+                string[] SortsEn = { "검색", fav, "편집", "복사", "삭제" };
                 string select = await DisplayActionSheet(null, null, null, SortsEn);
                 if (select == "검색")
                 {
@@ -188,13 +190,20 @@ namespace DerpViewer.Views
                     await Navigation.PushAsync(new DerpTagDetailPage(tag));
 
                 }
+                else if (select == fav)
+                {
+                    tag.IsFavorite = !tag.IsFavorite;
+                    await viewModel.DerpTagDb.UpdateTagAsync(tag);
+                }
                 else if (select == "복사")
                 {
                     await Clipboard.SetTextAsync(tag.Id);
                 }
                 else if (select == "삭제")
                 {
-                    await viewModel.DerpTagDb.DeleteTagAsync(tag.Id);
+                    var res = await DisplayAlert("알림", "정말 삭제하시겠습니까?", "예", "아니오");
+                    if (res)
+                        await viewModel.DerpTagDb.DeleteTagAsync(tag.Id);
                 }
                 lockTap = false;
             }
@@ -303,6 +312,40 @@ namespace DerpViewer.Views
                     modifiedTags.Clear();
                 }
             }
+        }
+
+        private async void FavoriteTappedAsync(object sender, EventArgs e)
+        {
+            DerpTag tag = ((Label)sender).BindingContext as DerpTag;
+            if (tag.IsFavorite)
+            {
+                if (await DisplayAlert("알림", "즐겨찾기를 제거합니까?", "확인", "취소"))
+                {
+                    tag.IsFavorite = !tag.IsFavorite;
+                    await viewModel.DerpTagDb.UpdateTagAsync(tag);
+                }
+            }
+            else
+            {
+                tag.IsFavorite = !tag.IsFavorite;
+                await viewModel.DerpTagDb.UpdateTagAsync(tag);
+            }
+            RootPage.FavoriteImageView.UpdateListView();
+        }
+
+        private async void FavoriteItem_Clicked(object sender, EventArgs e)
+        {
+            if (FavoriteItem.Text == "ALL")
+            {
+                favorite = true;
+                FavoriteItem.Text = "FAVORITE";
+            }
+            else
+            {
+                favorite = false;
+                FavoriteItem.Text = "ALL";
+            }
+            await Load();
         }
     }
 }

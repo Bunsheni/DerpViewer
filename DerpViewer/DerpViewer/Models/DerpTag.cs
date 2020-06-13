@@ -245,6 +245,7 @@ namespace DerpViewer.Models
             model.DescriptionEn = this.DescriptionEn;
             model.DescriptionKr = this.DescriptionKr;
             model.Synonym = this.Synonym;
+            model.IsFavorite = this.IsFavorite;
             return model;
         }
 
@@ -292,9 +293,18 @@ namespace DerpViewer.Models
         }
 
 
+        bool _isfavorite;
         public bool IsFavorite
         {
-            get; set;
+            get
+            {
+                return _isfavorite;
+            }
+            set
+            {
+                _isfavorite = value;
+                OnPropertyChanged();
+            }
         }
 
         public bool Contains(string key)

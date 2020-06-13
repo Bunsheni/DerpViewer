@@ -321,11 +321,11 @@ namespace DerpViewer.Views
             await viewModel.ExecuteLoadItemsCommand();
         }
 
-        public async Task Download(string folderName)
+        public async Task Download()
         {
             int count = 0;
             await Task.Run(async () => {
-                count = await viewModel.Download(folderName);
+                count = await viewModel.Download();
             });
             if (0 <= count)
                 await DisplayAlert("알림", $"{count}개 이미지가 다운로드 완료되었습니다.", "확인");
@@ -382,7 +382,7 @@ namespace DerpViewer.Views
 
         private async void Download_Clicked(object sender, EventArgs e)
         {
-            await Download(string.Empty);
+            await Download();
         }
 
         private async void FolderDownload_Clicked(object sender, EventArgs e)
@@ -510,7 +510,7 @@ namespace DerpViewer.Views
             {
                 overlay.IsVisible = false;
                 string name = foldernameentry.Text;
-                await Download(name);
+                await Download();
             }
         }
 

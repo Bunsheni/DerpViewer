@@ -3,22 +3,89 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:d="http://xamarin.com/schemas/2014/forms/design"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:lc="clr-namespace:Xamarin.Forms.Labs.Controls;assembly=Xamarin.Forms.Labs"
-             xmlns:lb="clr-namespace:Xamarin.Forms.Labs.Behaviors;assembly=Xamarin.Forms.Labs" 
+	         xmlns:ffimageloading="clr-namespace:FFImageLoading.Forms;assembly=FFImageLoading.Forms"
+             xmlns:lc="clr-namespace:XLabs.Forms.Controls;assembly=XLabs.Forms"
+             xmlns:lb="clr-namespace:XLabs.Forms.Behaviors;assembly=XLabs.Forms"
+             xmlns:local="clr-namespace:DerpViewer"
              mc:Ignorable="d"
              x:Class="DerpViewer.Views.FileBrowserPage">
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="New folder" Clicked="NewFolder_Clicked"/>
         <ToolbarItem Order="Secondary" Text="Image classification" Clicked="ClassifyMyImageFiles_Clicked"/>
         <ToolbarItem Order="Secondary" Text="Initialize image location" Clicked="InitializeFileLocation_Clicked"/>
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
-        <ListView ItemsSource="{Binding FileList}" ItemSelected="ListView_ItemSelected">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <TextCell Text="{Binding Name}">
-                    </TextCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <AbsoluteLayout>
+            <ContentView x:Name="contentView" Padding="1" AbsoluteLayout.LayoutBounds="0,0,1,1" AbsoluteLayout.LayoutFlags="All" IsVisible="true">
+                <StackLayout>
+                    <StackLayout x:Name="progressView" HeightRequest="{Binding ProgressBarHeight}" Margin="-3" IsVisible="{Binding ProgressBarIsVisible}">
+                        <ProgressBar x:Name="progressBar1" Progress="{Binding Progress1}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
+                        <ProgressBar x:Name="progressBar2" Progress="{Binding Progress2}" HeightRequest="4" Margin="0,-3" BackgroundColor="Transparent"/>
+                    </StackLayout>
+                    <ListView x:Name ="listView" ItemsSource="{Binding FileList}"
+                          ItemTapped="listView_ItemTapped"
+                          IsPullToRefreshEnabled="True">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <ViewCell>
+                                    <StackLayout Orientation="Horizontal" BackgroundColor="{Binding BackgroundColor}">
+                                        <ffimageloading:CachedImage  
+                                                HorizontalOptions="Center" VerticalOptions="Center"
+                                                WidthRequest="48" HeightRequest="48"
+			                                    ClassId="{Binding Name}"
+                                                Source="{Binding FullName}" LoadingPlaceholder="{Binding Thumbnail}" ErrorPlaceholder="{Binding Thumbnail}">
+                                            <ffimageloading:CachedImage.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
+                                            </ffimageloading:CachedImage.GestureRecognizers>
+                                        </ffimageloading:CachedImage>
+                                        <!--<Image Source="{Binding FullName}" HorizontalOptions="Center" VerticalOptions="Center"
+                                                WidthRequest="48" HeightRequest="48"
+			                                    ClassId="{Binding Name}">
+                                            </Image>-->
+                                        <StackLayout HorizontalOptions="StartAndExpand">
+                                            <Label Text="{Binding Name}" LineBreakMode="TailTruncation" HorizontalOptions="Start"/>
+                                            <StackLayout Orientation="Horizontal">
+                                                <Label Text='{Binding Type}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start"/>
+                                                <Label Text='{Binding LengthStr}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start"/>
+                                                <Label Text='{Binding CreationTimeStr}' LineBreakMode="TailTruncation" TextColor="Gray" HorizontalOptions="Start"/>
+                                            </StackLayout>
+                                        </StackLayout>
+                                    </StackLayout>
+                                </ViewCell>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackLayout>
+            </ContentView>
+            <ContentView x:Name="overlay"
+                             AbsoluteLayout.LayoutBounds=".5,.5,.6,.4"
+                             AbsoluteLayout.LayoutFlags="All"
+                             IsVisible="False">
+                <StackLayout Padding="5">
+                    <Entry x:Name="foldernameentry" Text="{Binding Key}" Placeholder="Folder name" TextChanged="Foldernameentry_TextChanged" BackgroundColor="White"/>
+                    <AbsoluteLayout >
+                        <StackLayout Orientation="Horizontal" BackgroundColor="White">
+                            <Button Text="Cancel" Clicked="NewFolderCancel_Clicked"/>
+                            <Button Text="Done" Clicked="NewFolderOk_Clicked"/>
+                        </StackLayout>
+                        <ContentView x:Name="searchView" AbsoluteLayout.LayoutBounds="0, 0, 1, 1" AbsoluteLayout.LayoutFlags="All" IsVisible="false">
+                            <ListView x:Name="suggestionListView" BackgroundColor="White"
+                              CachingStrategy="RecycleElement"
+                              SeparatorVisibility="None"
+                              HasUnevenRows="true"
+                              IsVisible="True"
+                              ItemsSource="{Binding SuggestionItems}"
+                              ItemTapped="suggestionListView_ItemTapped">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextCell Text="{Binding Text}" TextColor="{Binding CategoryColor}"/>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </ContentView>
+                    </AbsoluteLayout>
+                </StackLayout>
+            </ContentView>
+        </AbsoluteLayout>
     </ContentPage.Content>
 </ContentPage>

@@ -4,27 +4,10 @@
              xmlns:local="clr-namespace:DerpViewer.Views"
              x:Class="DerpViewer.Views.DerpTagsPage">
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Replace" Clicked="ReplaceItem_Clicked">
-            <ToolbarItem.Icon>
-                <OnPlatform x:TypeArguments="FileImageSource">
-                    <On Platform="UWP" Value="Icon\refresh.png"/>
-                </OnPlatform>
-            </ToolbarItem.Icon>
-        </ToolbarItem>
-        <ToolbarItem Order="Secondary" Text="Update" Clicked="TagUpdate_Clicked">
-            <ToolbarItem.Icon>
-                <OnPlatform x:TypeArguments="FileImageSource">
-                    <On Platform="UWP" Value="Icon\refresh.png"/>
-                </OnPlatform>
-            </ToolbarItem.Icon>
-        </ToolbarItem>
-        <ToolbarItem Order="Secondary" Text="Translate" Clicked="TagTranslate_Clicked">
-            <ToolbarItem.Icon>
-                <OnPlatform x:TypeArguments="FileImageSource">
-                    <On Platform="UWP" Value="Icon\refresh.png"/>
-                </OnPlatform>
-            </ToolbarItem.Icon>
-        </ToolbarItem>
+        <ToolbarItem x:Name="FavoriteItem" Text="ALL" Clicked="FavoriteItem_Clicked"/>
+        <ToolbarItem Text="Replace" Clicked="ReplaceItem_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="Update" Clicked="TagUpdate_Clicked"/>
+        <ToolbarItem Order="Secondary" Text="Translate" Clicked="TagTranslate_Clicked"/>
     </ContentPage.ToolbarItems>
     <ContentPage.Content>
         <AbsoluteLayout x:Name="abslayout" Padding="0" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
@@ -55,7 +38,24 @@
                             <DataTemplate>
                                 <ViewCell>
                                     <StackLayout BackgroundColor="{Binding BackgroundColor}">
-                                        <Label Text="{Binding NameEn}"/>
+                                        <StackLayout Orientation="Horizontal">
+                                            <Label x:Name="Favorite" TextColor="DarkGoldenrod" Text="★">
+                                                <Label.Style>
+                                                    <Style TargetType="{x:Type Label}">
+                                                        <Setter Property="IsVisible" Value="False"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger TargetType="{x:Type Label}" Binding="{Binding IsFavorite}" Value="True">
+                                                                <Setter Property="IsVisible" Value="True"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Label.Style>
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer Tapped="FavoriteTappedAsync"  NumberOfTapsRequired="1"/>
+                                                </Label.GestureRecognizers>
+                                            </Label>
+                                            <Label Text="{Binding NameEn}"/>
+                                        </StackLayout>
                                         <Label Text="{Binding NameKr}"/>
                                         <Label Text="{Binding CategoryStr}"/>
                                         <Label Text="{Binding Description}"/>

@@ -29,7 +29,7 @@
         </ToolbarItem>
 
         <ToolbarItem Order="Secondary" Text="{Binding SortText}" Clicked="Sort_Clicked"/>
-        <ToolbarItem Order="Secondary" Text="{Binding FolderDownloadText}" Clicked="FolderDownload_Clicked"/>
+        <!--<ToolbarItem Order="Secondary" Text="{Binding FolderDownloadText}" Clicked="FolderDownload_Clicked"/>-->
         <ToolbarItem Order="Secondary" Text="{Binding LinkCopyText}" Clicked="LinkCopy_Clicked"/>
         <ToolbarItem Order="Secondary" Text="{Binding HtmlCopyText}" Clicked="HtmlCopy_Clicked"/>
         <ToolbarItem Order="Secondary" Text="{Binding ViewText}" Clicked="View_Clicked"/>
@@ -72,7 +72,7 @@
                         <ListView x:Name="listView" Margin="0" 
                                   ItemsSource="{Binding Images}"
                                   IsRefreshing="{Binding ListViewIsRefreshing}"
-                                  HasUnevenRows="true"
+                                  HasUnevenRows="True"
                                   SelectionMode="None"
                                   ItemAppearing="listView_ItemAppearing"
                                   ItemDisappearing="ListView_ItemDisappearing"
@@ -84,11 +84,11 @@
                                 <DataTemplate>
                                     <ViewCell>
                                         <StackLayout Orientation="Horizontal" BackgroundColor="{Binding BackgroundColor}">
-                                            <ffimageloading:CachedImage  
+                                            <ffimageloading:CachedImage
                                                 HorizontalOptions="Center" VerticalOptions="Center"
                                                 WidthRequest="120" HeightRequest="120"
 			                                    ClassId="{Binding Id}"
-                                                Source="{Binding ThumbUrl}" LoadingPlaceholder="{Binding ThumbTinyUrl}">
+                                                Source="{Binding ThumbUrl}" LoadingPlaceholder="derpibooru_logo.png" >
                                                 <ffimageloading:CachedImage.GestureRecognizers>
                                                     <TapGestureRecognizer Tapped="ImageTapGestureRecognizer_Tapped" NumberOfTapsRequired="1"/>
                                                 </ffimageloading:CachedImage.GestureRecognizers>
@@ -248,7 +248,6 @@
                         </ListView>
                     </StackLayout>
                 </ContentView>
-
                 <ContentView x:Name="overlay"
                              AbsoluteLayout.LayoutBounds="0, 0, 1, 1" 
                              AbsoluteLayout.LayoutFlags="All" 
@@ -265,7 +264,6 @@
                         </StackLayout>
                     </StackLayout>
                 </ContentView>
-
             </AbsoluteLayout>
         </StackLayout>
     </ContentPage.Content>

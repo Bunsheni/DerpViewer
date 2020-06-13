@@ -35,8 +35,44 @@ namespace DerpViewer.Droid
 
         public async Task<string> CreateDirectory(string folderName)
         {
-            var directory = Directory.CreateDirectory(Path.Combine(GetDocumentsPath(), folderName));
+            var directory = Directory.CreateDirectory(Path.Combine(GetDocumentsPath(), folderName.Trim('/')));
             return directory.FullName;
+        }
+        public async Task<bool> MoveDirectory(string src, string dest)
+        {
+            if (Directory.Exists(src) && !Directory.Exists(dest))
+            {
+                try
+                {
+                    var srcd = Path.Combine(GetDocumentsPath(), src.Trim('/'));
+                    var destd = Path.Combine(GetDocumentsPath(), dest.Trim('/'));
+                    Directory.Move(srcd, destd);
+                    return true;
+                }
+                catch
+                {
+
+                }
+            }
+            return false;
+        }
+        public async Task<bool> MoveFile(string src, string dest)
+        {
+            try
+            {
+                var srcd = Path.Combine(GetDocumentsPath(), src.Trim('/'));
+                var destd = Path.Combine(GetDocumentsPath(), dest.Trim('/'));
+                if (System.IO.File.Exists(srcd) && !System.IO.File.Exists(destd))
+                {
+                    System.IO.File.Move(srcd, destd);
+                    return true;
+                }
+            }
+            catch
+            {
+
+            }
+            return false;
         }
 
         public async Task<Stream> GetReadFileStream(string fileName)

@@ -16,6 +16,8 @@ namespace DerpViewer
         /// <param name="folderName"></param>
         /// <returns></returns>
         Task<string> CreateDirectory(string folderName);
+        Task<bool> MoveFile(string src, string dest);
+        Task<bool> MoveDirectory(string src, string dest);
         Task<List<CtFileItem>> GetSubList(string name);
         Task<Stream> GetNewFileStream(string fileName);
         Task<Stream> GetReadFileStream(string fileName);

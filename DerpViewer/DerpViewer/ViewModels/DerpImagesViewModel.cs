@@ -233,7 +233,7 @@ namespace DerpViewer.ViewModels
                     await DerpImageDb.Load();
 
                 var mylist = await DerpImageDb.GetDerpImagesAsync();
-                var files = await fileService.GetSubList("");
+                var files = await fileService.GetSubFiles("");
                 List<CtFileItem> filelist = null;
                 if (files != null)
                 {
@@ -401,7 +401,7 @@ namespace DerpViewer.ViewModels
             await DerpImageDb.DeleteDerpImageAsync(img);
         }
 
-        public async Task<int> Download(string foldername)
+        public async Task<int> Download()
         {
             int res = -1;
             foreach (DerpImage image in GetSelectedImages())
@@ -414,12 +414,12 @@ namespace DerpViewer.ViewModels
             }
             if (downloadList.Count > 0 && !Downloading)
             {
-                res = await DownloadRun(foldername);
+                res = await DownloadRun();
             }
             return res;
         }
 
-        public async Task<int> DownloadRun(string foldername)
+        public async Task<int> DownloadRun()
         {
             int count = 0;
             Downloading = true;
@@ -428,7 +428,7 @@ namespace DerpViewer.ViewModels
             int i = 0;
             while (true)
             {
-                if (await DownloadImageAsync(foldername, downloadList[i].Image))
+                if (await DownloadImageAsync(downloadList[i].Image))
                     count++;
                 downloadList[i].IsDownloaded = true;
                 lock (downlaodLockObject)
@@ -449,10 +449,11 @@ namespace DerpViewer.ViewModels
             return count;
         }
 
-        private async Task<bool> DownloadImageAsync(string foldername, string url)
+        private async Task<bool> DownloadImageAsync(string url)
         {
-            string directory = await fileService.CreateDirectory(foldername);
             string fileName = url.Substring(url.LastIndexOf('/') + 1);
+            string folderName = await GetTagsDirectoryForDownload(fileName, string.Empty);
+            string directory = await fileService.CreateDirectory(folderName);
             string filePath = Path.Combine(directory, fileName);
 
             if (File.Exists(filePath)) return false;
@@ -471,7 +472,7 @@ namespace DerpViewer.ViewModels
                     && bImage)
                 {
                     using (Stream inputStream = response.GetResponseStream())
-                    using (Stream outputStream = await fileService.GetNewFileStream(Path.Combine(foldername, fileName)))
+                    using (Stream outputStream = await fileService.GetNewFileStream(filePath))
                     {
                         try
                         {
@@ -865,6 +866,59 @@ namespace DerpViewer.ViewModels
                 }
             }
             return true;
+        }
+
+        public async Task<string> GetTagsDirectoryForDownload(string name, string directoryName)
+        {
+            var items = await fileService.GetSubList(directoryName);
+            var files = items.FindAll(i => !i.IsDirectory);
+            var directories = items.FindAll(i => i.IsDirectory).OrderBy(j => j.Name.Length).ToArray();
+            var directoryOthers = directories.SingleOrDefault(i => i.Name == "others");
+            var i___ = name.IndexOf("__");
+            var i_dot = name.LastIndexOf(".");
+            if (0 < i___ && 0 <= i_dot && i___ < i_dot)
+            {
+                var i_tagstrlen = i_dot - i___;
+                var str_tags = name.Substring(i___ + 2, i_tagstrlen).Replace("+", " ").Replace("-colon-", "#");
+                var strl_tags = str_tags.Split('_').ToArray();
+                CtFileItem matchedDirectory = null;
+                bool matchFlag = false;
+                foreach (var dir in directories)
+                {
+                    var strl_dirtags = dir.Name.Replace(", ", ",").Split(',');
+                    var rest = strl_tags.Any(i => strl_dirtags.Contains(i));
+                    if (rest)
+                    {
+                        if (matchedDirectory == null)
+                        {
+                            matchedDirectory = dir;
+                            matchFlag = true;
+                        }
+                        else
+                        {
+                            matchedDirectory = null;
+                            break;
+                        }
+                    }
+                }
+
+                if (!matchFlag && directoryOthers != null)
+                {
+                    matchedDirectory = directoryOthers;
+                }
+
+                if (matchedDirectory != null)
+                {
+                    var res = await GetTagsDirectoryForDownload(name, matchedDirectory.ShortName);
+                    return res;
+                }
+                else
+                {
+                    var res = directoryName;
+                    return res;
+                }
+            }
+            return string.Empty;
         }
     }
 }
